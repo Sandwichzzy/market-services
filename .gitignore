@@ -28,6 +28,7 @@ go.work.sum
 .env
 .idea
 /market-services
+CLAUDE.md
 
 # Editor/IDE
 # .idea/

@@ -37,12 +37,19 @@ var interruptErr = errors.New("interrupt signal")
 // lifecycleCmd 是 LifecycleCmd 的内部实现，接受可注入的信号等待函数，
 // 便于单元测试时替换真实的信号监听逻辑。
 //
-// 执行流程：
-//  1. 创建带取消原因的 appCtx，并在后台 goroutine 中监听中断信号
-//  2. 调用 fn 初始化 Lifecycle，失败则返回错误
-//  3. 启动 Lifecycle，失败则返回错误
-//  4. 阻塞等待 appCtx 取消（信号或外部取消）
-//  5. 使用新的 stopCtx 执行优雅停止，同样监听第二次中断信号
+
+// ---
+// 执行流程
+// LifecycleCmd(你的工厂函数)
+// ↓
+// 1. 创建 appCtx（带取消原因）
+// 2. 后台监听 Ctrl+C 信号 → 收到后取消 appCtx
+// 3. 调用工厂函数，初始化你的服务
+// 4. 调用 Start() 启动服务
+// 5. 阻塞等待 appCtx 取消（等信号或外部取消）
+// 6. 创建新的 stopCtx，调用 Stop() 优雅停止
+// └─ 停止阶段再次按 Ctrl+C → 强制退出
+// ---
 func lifecycleCmd(fn LifecycleAction, blockOnInterrupt waitSignalFn) cli.ActionFunc {
 	return func(ctx *cli.Context) error {
 		hostCtx := ctx.Context

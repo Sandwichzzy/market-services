@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS symbol(
     symbol_name        VARCHAR(100) NOT NULL,                     -- 交易对名称（如 BTC/USDT）
     base_asset_guid    VARCHAR(100) NOT NULL,                     -- 基础资产ID（如 BTC）
     qoute_asset_guid   VARCHAR(100) NOT NULL,                     -- 计价资产ID（如 USDT）
-    market_type        VARCHAR(100) NOT NULL DEFAULT "SPOT",      -- 市场类型（SPOT:现货,FUTURE:期货,OPTION:期权）
+    market_type        VARCHAR(100) NOT NULL DEFAULT 'SPOT',      -- 市场类型（SPOT:现货,FUTURE:期货,OPTION:期权）
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,             -- 是否启用
     created_at         TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP,    -- 创建时间
     updated_at         TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP     -- 更新时间

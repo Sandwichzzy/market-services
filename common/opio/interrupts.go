@@ -33,12 +33,15 @@ func BlockOnInterruptsContext(ctx context.Context, signals ...os.Signal) {
 	if len(signals) == 0 {
 		signals = DefaultInterruptSignals
 	}
+	//创建了一个容量为 1 的缓冲 channel，用于接收操作系统信号。
 	interruptChannel := make(chan os.Signal, 1)
+	//将指定的信号（或默认中断信号）转发到这个 channel。
 	signal.Notify(interruptChannel, signals...)
 	select {
+	//当操作系统发送了匹配的信号时，该 case 会收到信号并立即执行，函数返回。
 	case <-interruptChannel:
 	case <-ctx.Done():
-		signal.Stop(interruptChannel)
+		signal.Stop(interruptChannel) //停止信号通知，避免 goroutine 泄漏，然后函数返回
 	}
 }
 
