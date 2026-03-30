@@ -100,6 +100,7 @@ func BlockerFromContext(ctx context.Context) BlockFn {
 // CancelOnInterrupt 返回一个新的 context，当收到中断信号时自动取消。
 // 优先使用 ctx 中注入的 BlockFn；若未注入则使用默认信号监听。
 func CancelOnInterrupt(ctx context.Context) context.Context {
+
 	inner, cancel := context.WithCancel(ctx)
 
 	blockOnInterrupt := BlockerFromContext(ctx)

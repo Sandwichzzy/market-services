@@ -17,7 +17,16 @@ import (
 )
 
 type DB struct {
-	gorm *gorm.DB
+	gorm                *gorm.DB
+	Asset               AssetDB
+	Currency            CurrencyDB
+	Exchange            ExchangeDB
+	ExchangeSymbol      ExchangeSymbolDB
+	ExchangeSymbolKline ExchangeSymbolKlineDB
+	Symbol              SymbolDB
+	SymbolKline         SymbolKlineDB
+	SymbolMarket        SymbolMarketDB
+	SymbolMarketCurrey  SymbolMarketCurreyDB
 }
 
 // NewDB 根据配置创建并返回一个数据库连接实例。
@@ -54,9 +63,36 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 		return nil, err
 	}
 	db := &DB{
-		gorm: gorm,
+		gorm:                gorm,
+		Asset:               NewAssetDB(gorm),
+		Currency:            NewCurrencyDB(gorm),
+		Exchange:            NewExchangeDB(gorm),
+		ExchangeSymbol:      NewExchangeSymbolDB(gorm),
+		ExchangeSymbolKline: NewExchangeSymbolKlineDB(gorm),
+		Symbol:              NewSymbolDB(gorm),
+		SymbolKline:         NewSymbolKlineDB(gorm),
+		SymbolMarket:        NewSymbolMarketDB(gorm),
+		SymbolMarketCurrey:  NewSymbolMarketCurreyDB(gorm),
 	}
 	return db, nil
+}
+
+func (db *DB) Transaction(fn func(db *DB) error) error {
+	return db.gorm.Transaction(func(tx *gorm.DB) error {
+		txDB := &DB{
+			gorm:                tx,
+			Asset:               NewAssetDB(tx),
+			Currency:            NewCurrencyDB(tx),
+			Exchange:            NewExchangeDB(tx),
+			ExchangeSymbol:      NewExchangeSymbolDB(tx),
+			ExchangeSymbolKline: NewExchangeSymbolKlineDB(tx),
+			Symbol:              NewSymbolDB(tx),
+			SymbolKline:         NewSymbolKlineDB(tx),
+			SymbolMarket:        NewSymbolMarketDB(tx),
+			SymbolMarketCurrey:  NewSymbolMarketCurreyDB(tx),
+		}
+		return fn(txDB)
+	})
 }
 
 // Close 关闭底层的 *sql.DB 连接池，释放数据库资源。
