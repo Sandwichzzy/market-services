@@ -7,6 +7,7 @@ import (
 	"github.com/Sandwichzzy/market-services/common/opio"
 	"github.com/Sandwichzzy/market-services/config"
 	"github.com/Sandwichzzy/market-services/database"
+	"github.com/Sandwichzzy/market-services/services/grpc"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli/v2"
 
@@ -18,8 +19,21 @@ import (
 // shutdown 可用于在服务内部主动触发优雅退出。
 // 当前为占位实现，待后续补充具体逻辑。
 func runRpc(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
-	fmt.Println("running grpc services...")
-	return nil, nil
+	// 将中断信号绑定到 ctx，收到 SIGINT/SIGTERM 时自动取消
+	ctx.Context = opio.CancelOnInterrupt(ctx.Context)
+	log.Info("running rpc...")
+	cfg := config.NewConfig(ctx)
+	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
+	if err != nil {
+		log.Error("failed to connect to database", "err", err)
+		return nil, err
+	}
+	marketConfig := grpc.MarketRpcConfig{
+		Host: cfg.RpcServer.Host,
+		Port: cfg.RpcServer.Port,
+	}
+
+	return grpc.NewMarketRpcService(&marketConfig, db)
 }
 
 // runMigrations 执行数据库迁移命令。
@@ -76,6 +90,18 @@ func NewCli(GitCommit string, GitData string) *cli.App {
 					cli.ShowVersion(ctx)
 					return nil
 				},
+			},
+			{
+				Name:        "rpc",
+				Flags:       flags,
+				Description: "Run rpc services",
+				Action:      cliapp.LifecycleCmd(runRpc),
+			},
+			{
+				Name:        "api",
+				Flags:       flags,
+				Description: "Run rpc services",
+				Action:      cliapp.LifecycleCmd(runRestApi),
 			},
 		},
 	}

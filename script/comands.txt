@@ -1,0 +1,47 @@
+    go get google.golang.org/grpc
+    go get github.com/envoyproxy/protoc-gen-validate
+
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
+
+    ---------------USE THIS BEFORE APPLYING VALIDATION
+    protoc -I=proto --go_out=. --go-grpc_out=require_unimplemented_servers=false:. proto/*.proto
+
+    ## -I ./
+    ##指定导入路径（-I 或 --proto_path）。编译器会在该目录下查找 .proto 文件中 import 的其他文件。这里设为当前目录 .，意味着所有导入都相对于当前工作目录。
+    ##
+    ## --go_out=.
+    ##生成 Go 消息代码的输出配置。--go_out 使用 protoc-gen-go 插件（需已安装）来生成 Go 语言的普通消息结构体。
+    ##./ 指定输出目录为当前目录。生成的 .pb.go 文件会放在与输入 .proto 文件相同的相对路径下（相对于输出目录）。
+
+    ---------------USE THIS AFTER APPLYING VALIDATION
+    protoc -I=proto --go_out=. --go-grpc_out=. --validate_out="lang=go:."  proto/main.proto proto/students.proto proto/execs.proto
+
+
+    --------------- BUILDING API BINARY
+    #参数	作用
+    #GOOS=darwin	目标操作系统是 macOS
+    #GOARCH=amd64	目标架构是 x86_64（Intel Mac）
+    #-o macOS_api_x86-64.exe	输出文件名
+    #server.go	编译入口文件
+
+    #跨平台编译（GOOS / GOARCH）
+    GOOS=darwin GOARCH=amd64 go build -o macOS_api_x86-64 server.go (Not if you are working on macOS amd64 system)
+    GOOS=windows GOARCH=amd64 go build -o windows_binary/binary-windows_x86-64 server.go (Not if you are working on macOS amd64 system)
+
+    #普通构建（不同版本
+    go build -o cmd/grpcapi/binaries/grpc_api_amd64 cmd/grpcapi/server.go
+    go build -o cmd/grpcapi/binaries/grpc_api_amd64_NON_TLS cmd/grpcapi/server.go
+    garble build -o cmd/grpcapi/binaries/obfuscated_grpc_api_amd64 cmd/grpcapi/server.go
+    garble build -o cmd/grpcapi/binaries/obfuscated_grpc_api_amd64_NON_TLS cmd/grpcapi/server.go
+
+    --------------- RUNNING API BINARY
+    ./grpc_api_amd64_NON_TLS
+    ./grpc_api_amd64_TLS
+    ./obfuscated_grpc_api_amd64_NON_TLS
+    ./obfuscated_grpc_api_amd64_TLS
+
+    -----------benchmarking
+    ghz --config ghz_config.json
+    ghz --insecure --config ghz_config.json

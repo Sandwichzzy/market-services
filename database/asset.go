@@ -11,8 +11,8 @@ type Asset struct {
 	Guid        string    `gorm:"primaryKey;column:guid;type:text" json:"guid"`
 	AssetName   string    `gorm:"column:asset_name;type:varchar(50);not null;default:'Tether USDT'" json:"asset_name"`
 	AssetSymbol string    `gorm:"column:asset_symbol;type:varchar(20);not null;default:'USDT'" json:"asset_symbol"`
-	AssetLog    string    `gorm:"column:asset_log;type:varchar(500);not null;default:''" json:"asset_log"`
-	IsActive    bool      `gorm:"column:is_active;type:boolean;not null;default:'true'" json:"is_active"`
+	AssetLogo   string    `gorm:"column:asset_logo;type:varchar(500);not null;default:''" json:"asset_logo"`
+	IsActive    bool      `gorm:"column:is_active;type:boolean;not null;default:true" json:"is_active"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
