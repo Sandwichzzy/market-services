@@ -67,7 +67,7 @@ func runRestApi(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Life
 }
 
 func runCrawler(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
-	log.Info("run orderbook crawler...")
+	log.Info("run cex crawler...")
 	cfg := config.NewConfig(ctx)
 	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
 	if err != nil {

@@ -44,7 +44,7 @@ func (bc *BinanceCrawler) Start() error {
 			case <-tickerOperator.C:
 				log.Println("binance fetch data start")
 			case <-bc.resourceCtx.Done():
-				log.Println("binance fetch data  stopped")
+				log.Println("binance fetch data stopped")
 				return errors.New("binance stopped")
 			}
 		}

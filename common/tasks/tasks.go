@@ -7,6 +7,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+//errgroup.Group
+//内部封装了  sync.WaitGroup
+//Go() 方法自动管理 Add/Done，代码更简洁
+//eg.Wait() 阻塞直到所有任务完成  返回第一个非 nil 错误（后续错误被忽略）
+
 // Group is a tasks group, which can at any point be awaited to complete.
 // Tasks in the group are run in separate go routines.
 // If a task panics, the panic is recovered with HandleCrit.
@@ -18,7 +23,8 @@ type Group struct {
 // t.errGroup.Go 是 golang.org/x/sync/errgroup 包中 Group 类型的方法，用于启动一个并发任务，并在任务返回错误时记录下来，
 func (t *Group) Go(fn func() error) {
 	t.errGroup.Go(func() error {
-		//Go 方法内部使用 defer recover() 捕获 panic，避免未处理的 panic 使整个进程退出。
+		//errgroup 不会自动 recover panic，仍需在任务函数内部处理
+		//使用 defer recover() 捕获 panic，避免未处理的 panic 使整个进程退出。
 		defer func() {
 			if err := recover(); err != nil {
 				//捕获 panic 后调用 debug.PrintStack() 输出堆栈信息，方便定位问题根源。
@@ -32,6 +38,7 @@ func (t *Group) Go(fn func() error) {
 }
 
 // Wait 会等待所有任务完成并返回第一个非 nil 错误（或 nil）。
+// 如果多个任务出错，后续错误会被忽略
 func (t *Group) Wait() error {
 	return t.errGroup.Wait()
 }
