@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Sandwichzzy/market-services/common/opio"
 	"github.com/Sandwichzzy/market-services/config"
+	"github.com/Sandwichzzy/market-services/crawler"
 	"github.com/Sandwichzzy/market-services/database"
 	"github.com/Sandwichzzy/market-services/services/grpc"
 	"github.com/ethereum/go-ethereum/log"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/Sandwichzzy/market-services/common/cliapp"
 	flags2 "github.com/Sandwichzzy/market-services/flags"
+	rest "github.com/Sandwichzzy/market-services/services/http"
 )
 
 // runRpc 启动 gRPC 服务，实现 cliapp.LifecycleAction 签名。
@@ -58,11 +59,22 @@ func runMigrations(ctx *cli.Context) error {
 	return db.ExecuteSQLMigration(cfg.Migrations)
 }
 
-// runRestApi 启动 REST API 服务，实现 cliapp.LifecycleAction 签名。
-// 当前为占位实现，待后续补充具体逻辑。
+// runRestApi 启动 REST API 服务
 func runRestApi(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
-	fmt.Println("running rest api...")
-	return nil, nil
+	log.Info("running api ...")
+	cfg := config.NewConfig(ctx)
+	return rest.NewApi(context.Background(), &cfg)
+}
+
+func runCrawler(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
+	log.Info("run orderbook crawler...")
+	cfg := config.NewConfig(ctx)
+	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
+	if err != nil {
+		log.Error("failed to connect to database", "err", err)
+		return nil, err
+	}
+	return crawler.NewCrawler(db, shutdown)
 }
 
 // NewCli 构建并返回应用的 CLI 入口。
@@ -100,8 +112,14 @@ func NewCli(GitCommit string, GitData string) *cli.App {
 			{
 				Name:        "api",
 				Flags:       flags,
-				Description: "Run rpc services",
+				Description: "Run restapi services",
 				Action:      cliapp.LifecycleCmd(runRestApi),
+			},
+			{
+				Name:        "crawler",
+				Flags:       flags,
+				Description: "Run crawler services",
+				Action:      cliapp.LifecycleCmd(runCrawler),
 			},
 		},
 	}
