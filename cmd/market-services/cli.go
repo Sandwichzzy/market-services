@@ -7,6 +7,7 @@ import (
 	"github.com/Sandwichzzy/market-services/config"
 	"github.com/Sandwichzzy/market-services/crawler"
 	"github.com/Sandwichzzy/market-services/database"
+	"github.com/Sandwichzzy/market-services/redis"
 	"github.com/Sandwichzzy/market-services/services/grpc"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli/v2"
@@ -74,7 +75,20 @@ func runCrawler(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Life
 		log.Error("failed to connect to database", "err", err)
 		return nil, err
 	}
-	return crawler.NewCrawler(db, shutdown)
+
+	redisConfig := redis.Config{
+		Address:  cfg.RedisConfig.Addr,
+		Password: cfg.RedisConfig.Password,
+		DB:       cfg.RedisConfig.DB,
+	}
+
+	redisClient, err := redis.New(redisConfig)
+	if err != nil {
+		log.Error("failed to connect to redis", "err", err)
+		return nil, err
+	}
+
+	return crawler.NewCrawler(db, redisClient, shutdown)
 }
 
 // NewCli 构建并返回应用的 CLI 入口。

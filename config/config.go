@@ -10,14 +10,26 @@ import (
 // cli.Context 提供的 String、Int 等方法返回具体类型，避免了手动类型转换错误。
 // 所有配置项的定义在 flags 包，组装逻辑在 config 包，便于维护和扩展。新增配置只需修改 flags 和 config 两处。
 type Config struct {
-	Migrations string
-	RpcServer  ServerConfig
-	RestServer ServerConfig
-	Metrics    ServerConfig
-	MasterDB   DBConfig
-	SlaveDB    DBConfig
+	Migrations            string
+	RpcServer             ServerConfig
+	RestServer            ServerConfig
+	RedisConfig           RedisConfig
+	Metrics               ServerConfig
+	MasterDB              DBConfig
+	SlaveDB               DBConfig
+	ExchangeRatePlatforms []ExchangeRatePlatformConfig
+	BaseCurrency          string
+	APIKeyConfig          APIKeyConfig
 }
 
+type APIKeyConfig struct {
+	ExchangeRate      string `yaml:"exchange_rate"`
+	FixerIO           string `yaml:"fixer_io"`
+	OpenExchangeRates string `yaml:"open_exchange_rates"`
+	Currency          string `yaml:"currency"`
+	CurrencyBeacon    string `yaml:"currency_beacon"`
+	CurrencyFreaks    string `yaml:"currency_freaks"`
+}
 type ServerConfig struct {
 	Host string
 	Port int
@@ -28,6 +40,17 @@ type DBConfig struct {
 	Name     string
 	User     string
 	Password string
+}
+
+type RedisConfig struct {
+	Addr     string `yaml:"addr"`     // Redis地址，格式: host:port
+	Password string `yaml:"password"` // Redis密码（可选）
+	DB       int    `yaml:"db"`       // Redis数据库索引
+}
+
+type ExchangeRatePlatformConfig struct {
+	Name    string
+	BaseURL string
 }
 
 func NewConfig(ctx *cli.Context) Config {
@@ -58,6 +81,11 @@ func NewConfig(ctx *cli.Context) Config {
 			Name:     ctx.String(flags.SlaveDbNameFlag.Name),
 			User:     ctx.String(flags.SlaveDbUserFlag.Name),
 			Password: ctx.String(flags.SlaveDbPasswordFlag.Name),
+		},
+		RedisConfig: RedisConfig{
+			Addr:     ctx.String(flags.RedisAddressFlag.Name),
+			Password: ctx.String(flags.RedisPasswordFlag.Name),
+			DB:       ctx.Int(flags.RedisDbIndexFlag.Name),
 		},
 	}
 }

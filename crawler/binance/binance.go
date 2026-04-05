@@ -8,20 +8,23 @@ import (
 
 	"github.com/Sandwichzzy/market-services/common/tasks"
 	"github.com/Sandwichzzy/market-services/database"
+	"github.com/Sandwichzzy/market-services/redis"
 	"github.com/cockroachdb/errors"
 )
 
 type BinanceCrawler struct {
 	db             *database.DB
+	redisCli       *redis.Client
 	resourceCtx    context.Context
 	resourceCancel context.CancelFunc
 	tasks          tasks.Group
 }
 
-func NewBinanceCrawler(db *database.DB, shutdown context.CancelCauseFunc) (*BinanceCrawler, error) {
+func NewBinanceCrawler(db *database.DB, redisCli *redis.Client, shutdown context.CancelCauseFunc) (*BinanceCrawler, error) {
 	resourceCtx, resourceCancel := context.WithCancel(context.Background())
 	return &BinanceCrawler{
 		db:             db,
+		redisCli:       redisCli,
 		resourceCtx:    resourceCtx,
 		resourceCancel: resourceCancel,
 		tasks: tasks.Group{HandleCrit: func(err error) {
