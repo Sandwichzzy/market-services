@@ -5,39 +5,23 @@ import (
 	"sync/atomic"
 
 	"github.com/Sandwichzzy/market-services/config"
-	"github.com/Sandwichzzy/market-services/crawler/binance"
-	"github.com/Sandwichzzy/market-services/crawler/bybit"
+	"github.com/Sandwichzzy/market-services/crawler/cryptoexchange"
 	"github.com/Sandwichzzy/market-services/crawler/fiatcurrency"
-	"github.com/Sandwichzzy/market-services/crawler/okx"
 	"github.com/Sandwichzzy/market-services/database"
 	"github.com/Sandwichzzy/market-services/redis"
 	"github.com/ethereum/go-ethereum/log"
 )
 
 type Crawler struct {
-	BinanceCrawler *binance.BinanceCrawler
-	OkxCrawler     *okx.OkxCrawler
-	BybitCrawler   *bybit.BybitCrawler
-
+	ExchangeOrderbook   *cryptoexchange.ExchangeOrderbook
 	FiatCurrencyCrawler *fiatcurrency.FiatCurrencyCrawler
 	stopped             atomic.Bool
 }
 
 func NewCrawler(db *database.DB, redisCli *redis.Client, config *config.Config, shutdown context.CancelCauseFunc) (*Crawler, error) {
-	binanceCrawler, err := binance.NewBinanceCrawler(db, redisCli, shutdown)
+	exchangeOrderbook, err := cryptoexchange.NewExchangeOrderbook(db, redisCli, shutdown)
 	if err != nil {
-		log.Error("Crawler NewBinanceCrawler err: ", err)
-		return nil, err
-	}
-	okxCrawler, err := okx.NewOkxCrawler(db, redisCli, shutdown)
-	if err != nil {
-		log.Error("Crawler okxCrawler error", err)
-		return nil, err
-	}
-
-	bybitCrawler, err := bybit.NewBybitCrawler(db, redisCli, shutdown)
-	if err != nil {
-		log.Error("Crawler bybitCrawler error", err)
+		log.Error("Crawler NewBinanceCrawler error", err)
 		return nil, err
 	}
 
@@ -48,27 +32,15 @@ func NewCrawler(db *database.DB, redisCli *redis.Client, config *config.Config, 
 	}
 
 	return &Crawler{
-		BinanceCrawler:      binanceCrawler,
-		OkxCrawler:          okxCrawler,
-		BybitCrawler:        bybitCrawler,
+		ExchangeOrderbook:   exchangeOrderbook,
 		FiatCurrencyCrawler: fiatcurrencyCrawler,
 	}, nil
 }
 
 func (cl *Crawler) Start(ctx context.Context) error {
-	err := cl.BinanceCrawler.Start()
+	err := cl.ExchangeOrderbook.Start()
 	if err != nil {
-		log.Error("Crawler BinanceCrawler error", err)
-		return err
-	}
-	err = cl.OkxCrawler.Start()
-	if err != nil {
-		log.Error("Crawler OkxCrawler error", err)
-		return err
-	}
-	err = cl.BybitCrawler.Start()
-	if err != nil {
-		log.Error("Crawler BybitCrawler error", err)
+		log.Error("Crawler ExchangeOrderbook Start error", err)
 		return err
 	}
 	err = cl.FiatCurrencyCrawler.Start()
@@ -80,18 +52,8 @@ func (cl *Crawler) Start(ctx context.Context) error {
 }
 
 func (cl *Crawler) Stop(ctx context.Context) error {
-	if err := cl.BinanceCrawler.Close(); err != nil {
-		log.Error("Crawler BinanceCrawler error", err)
-		return err
-	}
-
-	if err := cl.OkxCrawler.Close(); err != nil {
-		log.Error("Crawler OkxCrawler error", err)
-		return err
-	}
-
-	if err := cl.BybitCrawler.Close(); err != nil {
-		log.Error("Crawler BybitCrawler error", err)
+	if err := cl.ExchangeOrderbook.Close(); err != nil {
+		log.Error("Crawler ExchangeOrderbook Stop error", err)
 		return err
 	}
 	if err := cl.FiatCurrencyCrawler.Close(); err != nil {

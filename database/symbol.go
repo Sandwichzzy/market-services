@@ -25,6 +25,7 @@ func (Symbol) TableName() string {
 type SymbolView interface {
 	QuerySymbolList(page, pageSize int64) ([]*Symbol, int64, error)
 	QuerySymbols() ([]*Symbol, error)
+	QuerySymbolByGuid(symbolGuid string) (*Symbol, error)
 }
 
 type SymbolDB interface {
@@ -76,6 +77,15 @@ func (s *symbolDB) QuerySymbols() ([]*Symbol, error) {
 		return nil, err
 	}
 	return symbols, nil
+}
+
+func (s *symbolDB) QuerySymbolByGuid(symbolGuid string) (*Symbol, error) {
+	var symbol Symbol
+	if err := s.gorm.Table("symbols").Where("guid = ?", symbolGuid).First(&symbol).Error; err != nil {
+		log.Error("Symbol query by guid err: ", err)
+		return nil, err
+	}
+	return &symbol, nil
 }
 
 func (s *symbolDB) StoreSymbols(symbols []Symbol) error {

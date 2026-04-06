@@ -27,6 +27,7 @@ func (SymbolMarket) TableName() string {
 
 type SymbolMarketView interface {
 	QuerySymbolMarketList(page, pageSize int64) ([]*SymbolMarket, int64, error)
+	QuerySymbolMarketTodayFirstData() (*SymbolMarket, error)
 }
 
 type SymbolMarketDB interface {
@@ -72,6 +73,17 @@ func (s *symbolMarketDB) QuerySymbolMarketList(page, pageSize int64) ([]*SymbolM
 	}
 
 	return list, total, nil
+}
+
+func (s *symbolMarketDB) QuerySymbolMarketTodayFirstData() (*SymbolMarket, error) {
+	var symbolMarket *SymbolMarket
+	now := time.Now().UTC()
+	utcStartOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	if err := s.gorm.Table("symbol_market").Where("created_at > ?", utcStartOfDay).First(&symbolMarket).Error; err != nil {
+		log.Error("QuerySymbolMarketTodayFirstData err:", err)
+		return nil, err
+	}
+	return symbolMarket, nil
 }
 
 func (s *symbolMarketDB) StoreSymbolMarkets(list []SymbolMarket) error {

@@ -27,6 +27,7 @@ func (ExchangeSymbol) TableName() string {
 
 type ExchangeSymbolView interface {
 	QueryExchangeSymbolList(page, pageSize int64) ([]*ExchangeSymbol, int64, error)
+	QuerySymbolsByExchangeId(exchangeGuid string) ([]*ExchangeSymbol, error)
 }
 
 type ExchangeSymbolDB interface {
@@ -69,6 +70,15 @@ func (e *exchangeSymbolDB) QueryExchangeSymbolList(page, pageSize int64) ([]*Exc
 	}
 
 	return list, total, nil
+}
+
+func (e *exchangeSymbolDB) QuerySymbolsByExchangeId(exchangeGuid string) ([]*ExchangeSymbol, error) {
+	var symbols []*ExchangeSymbol
+	if err := e.gorm.Table("exchange_symbol").Where("exchange_guid = ? and is_active = ?", exchangeGuid, true).Find(&symbols).Error; err != nil {
+		log.Error("Query exchange symbol fail:", err)
+		return nil, err
+	}
+	return symbols, nil
 }
 
 func (e *exchangeSymbolDB) StoreExchangeSymbols(list []ExchangeSymbol) error {

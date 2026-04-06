@@ -9,6 +9,7 @@ import (
 	"github.com/Sandwichzzy/market-services/database"
 	"github.com/Sandwichzzy/market-services/redis"
 	"github.com/Sandwichzzy/market-services/services/grpc"
+	"github.com/Sandwichzzy/market-services/worker"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli/v2"
 
@@ -88,7 +89,28 @@ func runCrawler(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Life
 		return nil, err
 	}
 
-	return crawler.NewCrawler(db, redisClient, shutdown)
+	return crawler.NewCrawler(db, redisClient, &cfg, shutdown)
+}
+
+func runWorker(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
+	log.Info("run worker...")
+	cfg := config.NewConfig(ctx)
+	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
+	if err != nil {
+		log.Error("failed to connect to database", "err", err)
+		return nil, err
+	}
+	redisConfig := redis.Config{
+		Address:  cfg.RedisConfig.Addr,
+		Password: cfg.RedisConfig.Password,
+		DB:       cfg.RedisConfig.DB,
+	}
+	redisClient, err := redis.New(redisConfig)
+	if err != nil {
+		log.Error("fail to connect to redis", "err", err)
+		return nil, err
+	}
+	return worker.NewWorker(db, redisClient, &cfg, shutdown)
 }
 
 // NewCli 构建并返回应用的 CLI 入口。
@@ -110,14 +132,6 @@ func NewCli(GitCommit string, GitData string) *cli.App {
 				Action:      runMigrations,
 			},
 			{
-				Name:        "version",
-				Description: "Show project version",
-				Action: func(ctx *cli.Context) error {
-					cli.ShowVersion(ctx)
-					return nil
-				},
-			},
-			{
 				Name:        "rpc",
 				Flags:       flags,
 				Description: "Run rpc services",
@@ -134,6 +148,20 @@ func NewCli(GitCommit string, GitData string) *cli.App {
 				Flags:       flags,
 				Description: "Run crawler services",
 				Action:      cliapp.LifecycleCmd(runCrawler),
+			},
+			{
+				Name:        "worker",
+				Flags:       flags,
+				Description: "Run worker business",
+				Action:      cliapp.LifecycleCmd(runWorker),
+			},
+			{
+				Name:        "version",
+				Description: "Show project version",
+				Action: func(ctx *cli.Context) error {
+					cli.ShowVersion(ctx)
+					return nil
+				},
 			},
 		},
 	}

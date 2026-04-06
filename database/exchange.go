@@ -23,6 +23,7 @@ func (Exchange) TableName() string {
 
 type ExchangeView interface {
 	QueryExchangeList(page, pageSize int64) ([]*Exchange, int64, error)
+	QueryExchanges() ([]*Exchange, error)
 }
 
 type ExchangeDB interface {
@@ -65,6 +66,15 @@ func (e *exchangeDB) QueryExchangeList(page, pageSize int64) ([]*Exchange, int64
 	}
 
 	return list, total, nil
+}
+
+func (e *exchangeDB) QueryExchanges() ([]*Exchange, error) {
+	var exchanges []*Exchange
+	if err := e.gorm.Table("exchange").Where("is_active=?", true).Find(&exchanges).Error; err != nil {
+		log.Error("query exchanges failed", "error", err)
+		return nil, err
+	}
+	return exchanges, nil
 }
 
 func (e *exchangeDB) StoreExchanges(exchanges []Exchange) error {
