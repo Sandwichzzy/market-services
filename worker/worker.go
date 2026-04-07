@@ -12,20 +12,47 @@ import (
 )
 
 type Worker struct {
-	stopped atomic.Bool
+	marketPriceHandle *MarketPriceHandle
+	stopped           atomic.Bool
 }
 
 func NewWorker(db *database.DB, redisClient *redis.Client, config *config.Config, shutdown context.CancelCauseFunc) (*Worker, error) {
-	return &Worker{}, nil
+	marketPriceHandle, err := NewMarketPriceHandle(db, redisClient, shutdown)
+	if err != nil {
+		log.Error("Failed to create MarketPriceHandle", "error", err)
+		return nil, err
+	}
+
+	return &Worker{
+		marketPriceHandle: marketPriceHandle,
+	}, nil
 }
 
 func (w *Worker) Start(ctx context.Context) error {
 	log.Info("Starting worker")
+
+	if err := w.marketPriceHandle.Start(); err != nil {
+		log.Error("Failed to start MarketPriceHandle", "error", err)
+		return err
+	}
+
+	log.Info("Worker started successfully")
 	return nil
 }
 
 func (w *Worker) Stop(ctx context.Context) error {
 	log.Info("Stopping worker")
+
+	if w.marketPriceHandle != nil {
+		if err := w.marketPriceHandle.Stop(); err != nil {
+			log.Error("Failed to stop MarketPriceHandle", "error", err)
+			w.stopped.Store(true)
+			return err
+		}
+	}
+
+	w.stopped.Store(true)
+	log.Info("Worker stopped successfully")
 	return nil
 }
 

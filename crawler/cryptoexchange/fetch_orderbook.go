@@ -28,7 +28,6 @@ func NewExchangeOrderbook(db *database.DB, redisCli *redis.Client, shutDown cont
 		return nil, err
 	}
 	resourceCtx, resourceCancel := context.WithCancel(context.Background())
-	defer resourceCancel()
 	return &ExchangeOrderbook{
 		db:             db,
 		redisCli:       redisCli,
@@ -50,7 +49,7 @@ func (bc *ExchangeOrderbook) Close() error {
 
 func (bc *ExchangeOrderbook) Start() error {
 	bc.tasks.Go(func() error {
-		tickerOperator := time.NewTicker(time.Second * 5)
+		tickerOperator := time.NewTicker(time.Second * 10)
 		defer tickerOperator.Stop()
 		for {
 			select {

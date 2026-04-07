@@ -24,7 +24,6 @@ type MarketPriceHandle struct {
 
 func NewMarketPriceHandle(db *database.DB, redisCli *redis.Client, shutDown context.CancelCauseFunc) (*MarketPriceHandle, error) {
 	resourceCtx, resourceCancel := context.WithCancel(context.Background())
-	defer resourceCancel()
 	return &MarketPriceHandle{
 		db:             db,
 		redisCli:       redisCli,
@@ -45,7 +44,7 @@ func (mph *MarketPriceHandle) Close() error {
 
 func (mph *MarketPriceHandle) Start() error {
 	mph.tasks.Go(func() error {
-		tickerOperator := time.NewTicker(time.Second * 5)
+		tickerOperator := time.NewTicker(time.Second * 10)
 		defer tickerOperator.Stop()
 		for {
 			select {
