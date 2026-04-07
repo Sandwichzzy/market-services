@@ -94,6 +94,7 @@ func (mph *MarketPriceHandle) onPriceData() error {
 			guid, _ := uuid.NewUUID()
 			radio := strconv.FormatFloat(mph.calcRate(avgPrice), 'f', 2, 64)
 
+			//todo:Volume交易量 和 MarketCap市值 从 CMC 获取数据完善
 			dataSymbolMk := &database.SymbolMarket{
 				Guid:       guid.String(),
 				SymbolGuid: symbol.Guid,

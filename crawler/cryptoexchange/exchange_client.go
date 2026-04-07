@@ -67,7 +67,7 @@ func (ec *ExchangeClient) FetchOrderBook(exchangeName, symbol string) (*ccxt.Ord
 			log.Error("binance fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
 			return nil, err
 		}
-	case "Okx":
+	case "OKX":
 		orderBook, err = ec.OxkClient.FetchOrderBook(symbol)
 		if err != nil {
 			log.Error("binance fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
