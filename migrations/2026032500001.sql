@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS exchange_symbol(
     ask_price          NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (ask_price >= 0), -- 卖一价（最优卖价）
     bid_price          NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (bid_price >= 0), -- 买一价（最优买价）
     volume             UINT256 NOT NULL,                  -- 成交量（大整数，防止溢出）
-    radio              NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (radio >= 0),     -- 涨跌幅（比例值）
+    radio              NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (radio >= -1 AND radio <= 10),     -- 涨跌幅（比例值）
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,     -- 是否启用
     created_at         TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP, -- 创建时间
     updated_at         TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP  -- 更新时间
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS symbol_market(
     bid_price          NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (bid_price >= 0), -- 最优买价
     volume             UINT256 NOT NULL,                  -- 成交量（全市场）
     market_cap         UINT256 NOT NULL,                  -- 市值
-    radio              NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (radio >= 0),     -- 涨跌幅
+    radio              NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (radio >= -1 AND radio <= 10),     -- 涨跌幅
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,     -- 是否启用
     created_at         TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP, -- 创建时间
     updated_at         TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP  -- 更新时间

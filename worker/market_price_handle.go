@@ -84,11 +84,23 @@ func (mph *MarketPriceHandle) onPriceData() error {
 			}
 			log.Info("symbol", "symbolName", symbol.SymbolName)
 			key := exchange.Guid + "%" + exchange.Name + "%" + symbol.Guid + "%" + symbol.SymbolName
-			avgPrice, _ := mph.redisCli.Get(mph.resourceCtx, key)
+			avgPrice, err := mph.redisCli.Get(mph.resourceCtx, key)
+			if err != nil || avgPrice == "" {
+				log.Warn("Price data not found in Redis, skipping", "key", key)
+				continue // 跳过这个交易对
+			}
 			askPriceKey := key + "askPrice"
-			askPrice, _ := mph.redisCli.Get(mph.resourceCtx, askPriceKey)
+			askPrice, err := mph.redisCli.Get(mph.resourceCtx, askPriceKey)
+			if err != nil || askPrice == "" {
+				log.Warn("Ask price not found in Redis, skipping", "key", askPriceKey)
+				continue
+			}
 			bidPriceKey := key + "bidPrice"
-			bidPrice, _ := mph.redisCli.Get(mph.resourceCtx, bidPriceKey)
+			bidPrice, err := mph.redisCli.Get(mph.resourceCtx, bidPriceKey)
+			if err != nil || bidPrice == "" {
+				log.Warn("Bid price not found in Redis, skipping", "key", bidPriceKey)
+				continue
+			}
 
 			guid, _ := uuid.NewUUID()
 			radio := strconv.FormatFloat(mph.calcRate(avgPrice), 'f', 2, 64)
@@ -120,12 +132,28 @@ func (mph *MarketPriceHandle) onPriceData() error {
 func (mph *MarketPriceHandle) calcRate(curPrice string) float64 {
 	marketDataPrice, err := mph.db.SymbolMarket.QuerySymbolMarketTodayFirstData()
 	if err != nil {
-		log.Error("Query symbol market data fail", "error", err)
+		log.Warn("No historical data found, using 0 as initial rate", "error", err)
 		return 0
 	}
-	startOfDayPrice := marketDataPrice.Price
-	currentPrice, _ := strconv.ParseFloat(curPrice, 64)
-	firstPrice, _ := strconv.ParseFloat(startOfDayPrice, 64)
+
+	currentPrice, err := strconv.ParseFloat(curPrice, 64)
+	if err != nil {
+		log.Error("Failed to parse current price", "price", curPrice, "error", err)
+		return 0
+	}
+
+	firstPrice, err := strconv.ParseFloat(marketDataPrice.Price, 64)
+	if err != nil {
+		log.Error("Failed to parse first price", "price", marketDataPrice.Price, "error", err)
+		return 0
+	}
+
+	// 防止除以零
+	if firstPrice == 0 {
+		log.Warn("First price is zero, cannot calculate rate")
+		return 0
+	}
+
 	radio := (currentPrice - firstPrice) / firstPrice
 	return radio
 }

@@ -26,30 +26,49 @@ func NewExchangeClient(proxy string, proxyType string) (*ExchangeClient, error) 
 		cfg["socksProxy"] = proxy
 	}
 
-	bybitCli := ccxt.NewBybit(cfg)
+	var bybitCli *ccxt.Bybit
+	var okxCli *ccxt.Okx
+	var binanceCli *ccxt.Binance
+	successCount := 0
+
+	// Try to initialize Bybit
+	bybitCli = ccxt.NewBybit(cfg)
 	_, err := bybitCli.LoadMarkets()
 	if err != nil {
-		log.Error("bybit load markets error", "proxyType", proxyType, "proxy", proxy, "error", err)
-		return nil, err
+		log.Warn("bybit load markets error, skipping", "proxyType", proxyType, "proxy", proxy, "error", err)
+		bybitCli = nil
+	} else {
+		log.Info("bybit create success", "proxyType", proxyType, "proxy", proxy)
+		successCount++
 	}
-	log.Info("bybit create success", "proxyType", proxyType, "proxy", proxy)
 
-	okxCli := ccxt.NewOkx(cfg)
+	// Try to initialize OKX
+	okxCli = ccxt.NewOkx(cfg)
 	_, err = okxCli.LoadMarkets()
 	if err != nil {
-		log.Error("okx load markets error", "proxyType", proxyType, "proxy", proxy, "error", err)
-		return nil, err
+		log.Warn("okx load markets error, skipping", "proxyType", proxyType, "proxy", proxy, "error", err)
+		okxCli = nil
+	} else {
+		log.Info("oxk create success", "proxyType", proxyType, "proxy", proxy)
+		successCount++
 	}
-	log.Info("oxk create success", "proxyType", proxyType, "proxy", proxy)
 
-	binanceCli := ccxt.NewBinance(cfg)
+	// Try to initialize Binance
+	binanceCli = ccxt.NewBinance(cfg)
 	_, err = binanceCli.LoadMarkets()
 	if err != nil {
-		log.Error("binance load markets error", "proxyType", proxyType, "proxy", proxy, "error", err)
+		log.Warn("binance load markets error, skipping", "proxyType", proxyType, "proxy", proxy, "error", err)
+		binanceCli = nil
+	} else {
+		log.Info("binance create success", "proxyType", proxyType, "proxy", proxy)
+		successCount++
+	}
+
+	if successCount == 0 {
 		return nil, err
 	}
-	log.Info("binance create success", "proxyType", proxyType, "proxy", proxy)
 
+	log.Info("Exchange client initialized", "successCount", successCount, "total", 3)
 	return &ExchangeClient{
 		BybitClient:   bybitCli,
 		OxkClient:     okxCli,
@@ -62,21 +81,33 @@ func (ec *ExchangeClient) FetchOrderBook(exchangeName, symbol string) (*ccxt.Ord
 	var err error
 	switch exchangeName {
 	case "Binance":
+		if ec.BinanceClient == nil {
+			log.Warn("Binance client not initialized, skipping")
+			return nil, nil
+		}
 		orderBook, err = ec.BinanceClient.FetchOrderBook(symbol)
 		if err != nil {
 			log.Error("binance fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
 			return nil, err
 		}
 	case "OKX":
+		if ec.OxkClient == nil {
+			log.Warn("OKX client not initialized, skipping")
+			return nil, nil
+		}
 		orderBook, err = ec.OxkClient.FetchOrderBook(symbol)
 		if err != nil {
-			log.Error("binance fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
+			log.Error("okx fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
 			return nil, err
 		}
 	case "Bybit":
+		if ec.BybitClient == nil {
+			log.Warn("Bybit client not initialized, skipping")
+			return nil, nil
+		}
 		orderBook, err = ec.BybitClient.FetchOrderBook(symbol)
 		if err != nil {
-			log.Error("binance fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
+			log.Error("bybit fetch order book error", "exchangeName", exchangeName, "symbol", symbol, "error", err)
 			return nil, err
 		}
 	}

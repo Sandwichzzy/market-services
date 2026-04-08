@@ -22,6 +22,9 @@ type Config struct {
 	APIKeyConfig          APIKeyConfig
 }
 
+// 存储各平台的API认证密钥：每个字段对应一个平台的API密钥
+// 用于API请求认证：在 fiatcurrency.go:25-33 中，将密钥映射到平台名称传递给 ExchangeRateWorker
+// 安全管理：通过环境变量注入，避免硬编码敏感信息
 type APIKeyConfig struct {
 	ExchangeRate      string `yaml:"exchange_rate"`
 	FixerIO           string `yaml:"fixer_io"`
@@ -48,6 +51,9 @@ type RedisConfig struct {
 	DB       int    `yaml:"db"`       // Redis数据库索引
 }
 
+// (平台配置) 决定启用哪些汇率平台：配置项是一个数组，包含你想使用的所有平台
+// 指定平台的访问地址：每个平台可以自定义BaseURL（用于自建服务或代理）
+// 构建请求策略：在 fiatcurrency_client.go:329 的 BuildStrategyConfigs()
 type ExchangeRatePlatformConfig struct {
 	Name    string
 	BaseURL string

@@ -45,10 +45,10 @@ INSERT INTO exchange_symbol (
     is_active
 )
 VALUES
--- Binance
+-- Binance + BTC/USDT
 (
-    '8a6d4b7bfaeb482090a92940fd0ff0c4',
-    '044fd58b71bb4dcca80c8b0b6c8a8ca6',
+    (SELECT guid FROM exchange WHERE name = 'Binance' LIMIT 1),
+    (SELECT guid FROM symbol WHERE symbol_name = 'BTC/USDT' LIMIT 1),
     68500.120000000000000000,
     68510.500000000000000000,
     68495.800000000000000000,
@@ -56,9 +56,10 @@ VALUES
     0.023500000000000000,
     TRUE
 ),
+-- Binance + ETH/USDT
 (
-    '8a6d4b7bfaeb482090a92940fd0ff0c4',
-    'e06a350484ac48c492f083d40f7d58e4',
+    (SELECT guid FROM exchange WHERE name = 'Binance' LIMIT 1),
+    (SELECT guid FROM symbol WHERE symbol_name = 'ETH/USDT' LIMIT 1),
     3520.450000000000000000,
     3521.100000000000000000,
     3519.900000000000000000,
@@ -66,10 +67,10 @@ VALUES
     0.018200000000000000,
     TRUE
 ),
--- OKX
+-- OKX + BTC/USDT
 (
-    '2f95152b4ab24b45918311edf9330c28',
-    '044fd58b71bb4dcca80c8b0b6c8a8ca6',
+    (SELECT guid FROM exchange WHERE name = 'OKX' LIMIT 1),
+    (SELECT guid FROM symbol WHERE symbol_name = 'BTC/USDT' LIMIT 1),
     68498.900000000000000000,
     68508.200000000000000000,
     68493.600000000000000000,
@@ -77,9 +78,10 @@ VALUES
     0.021800000000000000,
     TRUE
 ),
+-- OKX + ETH/USDT
 (
-    '2f95152b4ab24b45918311edf9330c28',
-    'e06a350484ac48c492f083d40f7d58e4',
+    (SELECT guid FROM exchange WHERE name = 'OKX' LIMIT 1),
+    (SELECT guid FROM symbol WHERE symbol_name = 'ETH/USDT' LIMIT 1),
     3518.700000000000000000,
     3519.500000000000000000,
     3518.200000000000000000,
@@ -87,11 +89,10 @@ VALUES
     0.016500000000000000,
     TRUE
 ),
-
--- Bybit
+-- Bybit + BTC/USDT
 (
-    '157aa7ecfefd4606a5e5b921192ac3d9',
-    '044fd58b71bb4dcca80c8b0b6c8a8ca6',
+    (SELECT guid FROM exchange WHERE name = 'Bybit' LIMIT 1),
+    (SELECT guid FROM symbol WHERE symbol_name = 'BTC/USDT' LIMIT 1),
     68502.300000000000000000,
     68512.000000000000000000,
     68497.100000000000000000,
@@ -99,9 +100,10 @@ VALUES
     0.022600000000000000,
     TRUE
 ),
+-- Bybit + ETH/USDT
 (
-    '157aa7ecfefd4606a5e5b921192ac3d9',
-    'e06a350484ac48c492f083d40f7d58e4',
+    (SELECT guid FROM exchange WHERE name = 'Bybit' LIMIT 1),
+    (SELECT guid FROM symbol WHERE symbol_name = 'ETH/USDT' LIMIT 1),
     3521.200000000000000000,
     3521.800000000000000000,
     3520.600000000000000000,

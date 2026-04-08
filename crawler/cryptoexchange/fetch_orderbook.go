@@ -91,8 +91,8 @@ func (bc *ExchangeOrderbook) syncOrderBookData() error {
 
 			orderBook, err := bc.exchangeClient.FetchOrderBook(exchange.Name, symbol.SymbolName)
 			if err != nil {
-				log.Error("Fetch order book fail", "symbol", symbol.SymbolName, "error", err)
-				return err
+				log.Warn("Fetch order book fail, skipping", "exchange", exchange.Name, "symbol", symbol.SymbolName, "error", err)
+				continue
 			}
 			if orderBook == nil {
 				continue
