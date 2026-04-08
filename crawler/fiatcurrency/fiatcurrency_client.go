@@ -121,46 +121,52 @@ func NewExchangeRateWorker(
 		providers:       make(map[string]ExchangeRateProvider),
 	}
 
-	// 基于配置初始化 providers
-	worker.initializeProviders()
+	if err := worker.initializeProviders(); err != nil {
+		return nil, err
+	}
 
 	return worker, nil
 }
 
-func (w *ExchangeRateWorker) initializeProviders() {
+func (w *ExchangeRateWorker) initializeProviders() error {
 	platforms := w.config.ExchangeRatePlatforms
-
-	platformURLs := make(map[string]string)
-	for _, platform := range platforms {
-		platformURLs[platform.Name] = platform.BaseURL
+	if len(platforms) == 0 {
+		return fmt.Errorf("no exchange rate platforms configured")
 	}
 
-	for name, apiKey := range w.providerConfigs {
-		if apiKey == "" && name != "FawazExchange" {
-			continue
-		}
-
-		strategyConfig, ok := w.strategyConfigs[name]
+	for _, platform := range platforms {
+		strategyConfig, ok := w.strategyConfigs[platform.Name]
 		if !ok {
-			log.Warn("Unknown provider, no strategy config found", "name", name)
-			continue
+			return fmt.Errorf("missing strategy config for provider %s", platform.Name)
 		}
 
-		baseURL := platformURLs[name]
+		apiKey := w.providerConfigs[platform.Name]
+		if apiKey == "" && platform.Name != "FawazExchange" {
+			return fmt.Errorf("missing API key for provider %s", platform.Name)
+		}
+
+		baseURL := platform.BaseURL
 		if baseURL == "" {
 			baseURL = strategyConfig.defaultBaseURL
 		}
+		if baseURL == "" {
+			return fmt.Errorf("missing base URL for provider %s", platform.Name)
+		}
 
-		w.providers[name] = NewGenericProvider(
-			name,
+		w.providers[platform.Name] = NewGenericProvider(
+			platform.Name,
 			apiKey,
 			baseURL,
 			strategyConfig.urlBuilder,
 			strategyConfig.responseParser,
 		)
 	}
+	if len(w.providers) == 0 {
+		return fmt.Errorf("no exchange rate providers initialized")
+	}
 
 	log.Info("Initialized exchange rate providers", "count", len(w.providers))
+	return nil
 }
 
 type rateResult struct {
@@ -177,10 +183,6 @@ func (w *ExchangeRateWorker) FetchAndStoreRates() {
 		log.Error("Failed to get currencies", "error", err)
 		return
 	}
-	if len(currencies) == 0 {
-		log.Warn("No enabled currencies found")
-		return
-	}
 
 	platforms := w.config.ExchangeRatePlatforms
 	if len(platforms) == 0 {
@@ -190,9 +192,17 @@ func (w *ExchangeRateWorker) FetchAndStoreRates() {
 
 	currencyCodes := make([]string, 0, len(currencies))
 	currencyMap := make(map[string]*database.Currency)
+	seenCurrencyCodes := make(map[string]struct{}, len(currencies))
 	for _, currency := range currencies {
+		if _, exists := seenCurrencyCodes[currency.CurrencyCode]; exists {
+			continue
+		}
+		seenCurrencyCodes[currency.CurrencyCode] = struct{}{}
 		currencyCodes = append(currencyCodes, currency.CurrencyCode)
 		currencyMap[currency.CurrencyCode] = currency
+	}
+	if len(currencyCodes) == 0 {
+		log.Info("No enabled currencies found, bootstrapping from provider response")
 	}
 
 	var wg sync.WaitGroup
@@ -264,27 +274,38 @@ func (w *ExchangeRateWorker) fetchRatesFromProvider(
 }
 
 func (w *ExchangeRateWorker) storeRates(result *rateResult, currencyMap map[string]*database.Currency, batchTimestamp time.Time) error {
-	now := time.Now()
-
 	for currencyCode, baseRate := range result.rates {
-		currency, ok := currencyMap[currencyCode]
-		if !ok {
-			continue
+		now := time.Now()
+		baseRateDecimal := decimal.NewFromFloat(baseRate)
+		existingCurrency, ok := currencyMap[currencyCode]
+		currencyName := currencyCode
+		guid := uuid.New().String()
+		buySpread := 0.05
+		sellSpread := 0.05
+		isActive := true
+		createdAt := now
+
+		if ok {
+			guid = existingCurrency.Guid
+			if existingCurrency.CurrencyName != "" {
+				currencyName = existingCurrency.CurrencyName
+			}
+			buySpread = existingCurrency.BuySpread
+			sellSpread = existingCurrency.SellSpread
+			isActive = existingCurrency.IsActive
+			createdAt = existingCurrency.CreatedAt
 		}
 
-		baseRateDecimal := decimal.NewFromFloat(baseRate)
-
-		// Create current rate record
 		currentRate := &database.Currency{
-			Guid:         uuid.New().String(),
+			Guid:         guid,
 			CurrencyCode: currencyCode,
-			CurrencyName: currency.CurrencyName,
+			CurrencyName: currencyName,
 			Rate:         baseRateDecimal.InexactFloat64(),
-			BuySpread:    0.05,
-			SellSpread:   0.05,
-			IsActive:     true,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			BuySpread:    buySpread,
+			SellSpread:   sellSpread,
+			IsActive:     isActive,
+			CreatedAt:    createdAt,
+			UpdatedAt:    batchTimestamp,
 		}
 
 		if err := w.db.Currency.StoreCurrency(currentRate); err != nil {
@@ -315,6 +336,12 @@ func exchangeRateAPIResponseParser(body []byte, targetCurrencies []string) (map[
 	if result.Result != "success" {
 		return nil, fmt.Errorf("API returned error status: %s", result.Result)
 	}
+	if len(result.ConversionRates) == 0 {
+		return nil, fmt.Errorf("conversion_rates is empty")
+	}
+	if len(targetCurrencies) == 0 {
+		return result.ConversionRates, nil
+	}
 
 	rates := make(map[string]float64)
 	for _, currency := range targetCurrencies {
@@ -334,10 +361,12 @@ func BuildStrategyConfigs(platformConfigs []config.ExchangeRatePlatformConfig) m
 	strategyMap := map[string]struct {
 		urlBuilder     URLBuilder
 		responseParser ResponseParser
+		defaultBaseURL string
 	}{
 		"ExchangeRate-API": {
 			urlBuilder:     exchangeRateAPIURLBuilder,
 			responseParser: exchangeRateAPIResponseParser,
+			defaultBaseURL: "https://v6.exchangerate-api.com/v6",
 		},
 		//"Fixer.io": {
 		//	urlBuilder:     fiexerIOURLBuilder,
@@ -354,6 +383,10 @@ func BuildStrategyConfigs(platformConfigs []config.ExchangeRatePlatformConfig) m
 
 	for _, platformConfig := range platformConfigs {
 		if strategy, exists := strategyMap[platformConfig.Name]; exists {
+			defaultBaseURL := strategy.defaultBaseURL
+			if platformConfig.BaseURL != "" {
+				defaultBaseURL = platformConfig.BaseURL
+			}
 			result[platformConfig.Name] = struct {
 				urlBuilder     URLBuilder
 				responseParser ResponseParser
@@ -361,7 +394,7 @@ func BuildStrategyConfigs(platformConfigs []config.ExchangeRatePlatformConfig) m
 			}{
 				urlBuilder:     strategy.urlBuilder,
 				responseParser: strategy.responseParser,
-				defaultBaseURL: platformConfig.BaseURL,
+				defaultBaseURL: defaultBaseURL,
 			}
 		}
 	}

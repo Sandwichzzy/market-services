@@ -1,0 +1,7 @@
+  api_keys:
+    exchange_rate: "your-exchangerate-api-key-here"
+    fixer_io: "your-fixer-api-key-here"
+    open_exchange_rates: "your-openexchangerates-api-key-here"
+    currency: "your-currencyapi-key-here"
+    currency_beacon: "your-currencybeacon-api-key-here"
+    currency_freaks: "your-currencyfreaks-api-key-here"

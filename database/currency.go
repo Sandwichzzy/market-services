@@ -72,7 +72,7 @@ func (c *currencyDB) QueryCurrencyList(page, pageSize int64) ([]*Currency, int64
 
 func (c *currencyDB) QueryActiveCurrency() ([]*Currency, error) {
 	var currencies []*Currency
-	if err := c.gorm.Table("currency").Where("is_active = ?", false).Find(&currencies).Error; err != nil {
+	if err := c.gorm.Table("currency").Where("is_active = ?", true).Find(&currencies).Error; err != nil {
 		log.Error("Failed to query active currency list", "error", err)
 		return nil, err
 	}
@@ -88,6 +88,26 @@ func (c *currencyDB) StoreCurrencies(currencies []Currency) error {
 }
 
 func (c *currencyDB) StoreCurrency(currency *Currency) error {
+	if currency.Guid != "" {
+		updateFields := map[string]any{
+			"currency_name": currency.CurrencyName,
+			"currency_code": currency.CurrencyCode,
+			"rate":          currency.Rate,
+			"buy_spread":    currency.BuySpread,
+			"sell_spread":   currency.SellSpread,
+			"is_active":     currency.IsActive,
+			"updated_at":    currency.UpdatedAt,
+		}
+		tx := c.gorm.Table("currency").Where("guid = ?", currency.Guid).Updates(updateFields)
+		if tx.Error != nil {
+			log.Error("Failed to update currency", "error", tx.Error)
+			return tx.Error
+		}
+		if tx.RowsAffected > 0 {
+			return nil
+		}
+	}
+
 	if err := c.gorm.Table("currency").Create(currency).Error; err != nil {
 		log.Error("Failed to store currency", "error", err)
 		return err

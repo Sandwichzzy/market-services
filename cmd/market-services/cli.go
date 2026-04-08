@@ -25,7 +25,11 @@ func runRpc(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycl
 	// 将中断信号绑定到 ctx，收到 SIGINT/SIGTERM 时自动取消
 	ctx.Context = opio.CancelOnInterrupt(ctx.Context)
 	log.Info("running rpc...")
-	cfg := config.NewConfig(ctx)
+	cfg, err := config.NewConfig(ctx)
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return nil, err
+	}
 	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
 	if err != nil {
 		log.Error("failed to connect to database", "err", err)
@@ -46,7 +50,11 @@ func runMigrations(ctx *cli.Context) error {
 	// 将中断信号绑定到 ctx，收到 SIGINT/SIGTERM 时自动取消
 	ctx.Context = opio.CancelOnInterrupt(ctx.Context)
 	log.Info("running migrations...")
-	cfg := config.NewConfig(ctx)
+	cfg, err := config.NewConfig(ctx)
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return err
+	}
 	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
 	if err != nil {
 		log.Error("failed to connect to database", "err", err)
@@ -64,13 +72,21 @@ func runMigrations(ctx *cli.Context) error {
 // runRestApi 启动 REST API 服务
 func runRestApi(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
 	log.Info("running api ...")
-	cfg := config.NewConfig(ctx)
+	cfg, err := config.NewConfig(ctx)
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return nil, err
+	}
 	return rest.NewApi(context.Background(), &cfg)
 }
 
 func runCrawler(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
 	log.Info("run cex crawler...")
-	cfg := config.NewConfig(ctx)
+	cfg, err := config.NewConfig(ctx)
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return nil, err
+	}
 	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
 	if err != nil {
 		log.Error("failed to connect to database", "err", err)
@@ -94,7 +110,11 @@ func runCrawler(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Life
 
 func runWorker(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
 	log.Info("run worker...")
-	cfg := config.NewConfig(ctx)
+	cfg, err := config.NewConfig(ctx)
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return nil, err
+	}
 	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
 	if err != nil {
 		log.Error("failed to connect to database", "err", err)

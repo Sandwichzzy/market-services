@@ -41,7 +41,6 @@ func NewFiatCurrencyCrawler(db *database.DB, conf *config.Config, shutdown conte
 	}
 
 	resourceCtx, resourceCancel := context.WithCancel(context.Background())
-	defer resourceCancel()
 	return &FiatCurrencyCrawler{
 		db:                 db,
 		exchangeRateWorker: exchangeRateWorker,
@@ -60,9 +59,10 @@ func (bc *FiatCurrencyCrawler) Close() error {
 
 func (bc *FiatCurrencyCrawler) Start() error {
 	bc.tasks.Go(func() error {
+		tickerOperator := time.NewTicker(time.Second * 10)
+		defer tickerOperator.Stop()
+
 		for {
-			tickerOperator := time.NewTicker(time.Second * 10)
-			defer tickerOperator.Stop()
 			select {
 			case <-tickerOperator.C:
 				bc.exchangeRateWorker.FetchAndStoreRates()

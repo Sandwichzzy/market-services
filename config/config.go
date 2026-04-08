@@ -1,8 +1,18 @@
 package config
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/Sandwichzzy/market-services/flags"
 	"github.com/urfave/cli/v2"
+	"gopkg.in/yaml.v3"
+)
+
+const (
+	defaultAPIKeysConfigPath      = "config/api-keys.yaml"
+	defaultBaseCurrency           = "USD"
+	defaultExchangeRateAPIBaseURL = "https://v6.exchangerate-api.com/v6"
 )
 
 // 将从命令行（或环境变量）解析到的参数，转换为结构化的配置对象，供应用程序其他部分直接使用。
@@ -59,7 +69,42 @@ type ExchangeRatePlatformConfig struct {
 	BaseURL string
 }
 
-func NewConfig(ctx *cli.Context) Config {
+type apiKeyFileConfig struct {
+	APIKeys *APIKeyConfig `yaml:"api_keys"`
+}
+
+func loadAPIKeyConfig(path string) (APIKeyConfig, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return APIKeyConfig{}, fmt.Errorf("read %s: %w", path, err)
+	}
+
+	var parsed apiKeyFileConfig
+	if err := yaml.Unmarshal(content, &parsed); err != nil {
+		return APIKeyConfig{}, fmt.Errorf("unmarshal %s: %w", path, err)
+	}
+	if parsed.APIKeys == nil {
+		return APIKeyConfig{}, fmt.Errorf("missing api_keys section in %s", path)
+	}
+
+	return *parsed.APIKeys, nil
+}
+
+func defaultExchangeRatePlatforms() []ExchangeRatePlatformConfig {
+	return []ExchangeRatePlatformConfig{
+		{
+			Name:    "ExchangeRate-API",
+			BaseURL: defaultExchangeRateAPIBaseURL,
+		},
+	}
+}
+
+func NewConfig(ctx *cli.Context) (Config, error) {
+	apiKeyConfig, err := loadAPIKeyConfig(defaultAPIKeysConfigPath)
+	if err != nil {
+		return Config{}, fmt.Errorf("load api key config: %w", err)
+	}
+
 	return Config{
 		Migrations: ctx.String(flags.MigrationsFlag.Name),
 		RpcServer: ServerConfig{
@@ -93,5 +138,8 @@ func NewConfig(ctx *cli.Context) Config {
 			Password: ctx.String(flags.RedisPasswordFlag.Name),
 			DB:       ctx.Int(flags.RedisDbIndexFlag.Name),
 		},
-	}
+		ExchangeRatePlatforms: defaultExchangeRatePlatforms(),
+		BaseCurrency:          defaultBaseCurrency,
+		APIKeyConfig:          apiKeyConfig,
+	}, nil
 }

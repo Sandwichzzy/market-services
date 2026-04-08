@@ -8,6 +8,7 @@
 *.so
 *.dylib
 
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -29,8 +30,10 @@ go.work.sum
 .idea
 /market-services
 CLAUDE.md
+AGENTS.md
 .claude
+*.yaml
 
 # Editor/IDE
-# .idea/
-# .vscode/
+ .idea/
+ .vscode/
