@@ -1,5 +1,6 @@
   api_keys:
     exchange_rate: "your-exchangerate-api-key-here"
+    coin_market_cap: "your-coinmarketcap-api-key-here"
     fixer_io: "your-fixer-api-key-here"
     open_exchange_rates: "your-openexchangerates-api-key-here"
     currency: "your-currencyapi-key-here"

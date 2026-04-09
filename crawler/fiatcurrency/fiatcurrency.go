@@ -59,7 +59,7 @@ func (bc *FiatCurrencyCrawler) Close() error {
 
 func (bc *FiatCurrencyCrawler) Start() error {
 	bc.tasks.Go(func() error {
-		tickerOperator := time.NewTicker(time.Second * 10)
+		tickerOperator := time.NewTicker(time.Second * 60)
 		defer tickerOperator.Stop()
 
 		for {

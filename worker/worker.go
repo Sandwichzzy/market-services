@@ -17,7 +17,7 @@ type Worker struct {
 }
 
 func NewWorker(db *database.DB, redisClient *redis.Client, config *config.Config, shutdown context.CancelCauseFunc) (*Worker, error) {
-	marketPriceHandle, err := NewMarketPriceHandle(db, redisClient, shutdown)
+	marketPriceHandle, err := NewMarketPriceHandle(db, redisClient, config, shutdown)
 	if err != nil {
 		log.Error("Failed to create MarketPriceHandle", "error", err)
 		return nil, err

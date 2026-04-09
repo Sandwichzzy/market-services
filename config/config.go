@@ -37,6 +37,7 @@ type Config struct {
 // 安全管理：通过环境变量注入，避免硬编码敏感信息
 type APIKeyConfig struct {
 	ExchangeRate      string `yaml:"exchange_rate"`
+	CoinMarketCap     string `yaml:"coin_market_cap"`
 	FixerIO           string `yaml:"fixer_io"`
 	OpenExchangeRates string `yaml:"open_exchange_rates"`
 	Currency          string `yaml:"currency"`

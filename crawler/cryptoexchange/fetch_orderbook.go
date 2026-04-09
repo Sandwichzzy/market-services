@@ -2,7 +2,6 @@ package cryptoexchange
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -62,7 +61,7 @@ func (bc *ExchangeOrderbook) Start() error {
 				}
 			case <-bc.resourceCtx.Done():
 				log.Info("exchange fetch orderbook shutting down")
-				return errors.New("exchange stopped")
+				return nil
 			}
 		}
 	})

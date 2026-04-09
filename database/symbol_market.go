@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
@@ -80,7 +81,9 @@ func (s *symbolMarketDB) QuerySymbolMarketTodayFirstData() (*SymbolMarket, error
 	now := time.Now().UTC()
 	utcStartOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	if err := s.gorm.Table("symbol_market").Where("created_at > ?", utcStartOfDay).First(&symbolMarket).Error; err != nil {
-		log.Error("QuerySymbolMarketTodayFirstData err:", err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("QuerySymbolMarketTodayFirstData error", "error", err)
+		}
 		return nil, err
 	}
 	return symbolMarket, nil
