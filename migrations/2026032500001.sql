@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS exchange_symbol_kline(
     open_price         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (open_price >= 0),  -- 开盘价
     close_price        NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (close_price >= 0),-- 收盘价
     high_price         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (high_price >= 0), -- 最高价
-    low_active         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (low_active >= 0), -- 最低价
+    low_price         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (low_price >= 0), -- 最低价
     volume             UINT256 NOT NULL,                  -- 成交量
     market_cap         UINT256 NOT NULL,                  -- 市值或成交额
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,
@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS symbol_kline(
     open_price         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (open_price >= 0),  -- 开盘价
     close_price        NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (close_price >= 0),-- 收盘价
     high_price         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (high_price >= 0), -- 最高价
-    low_active         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (low_active >= 0), -- 最低价
+    low_price         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (low_price >= 0), -- 最低价
     volume             UINT256 NOT NULL,                  -- 成交量
     market_cap         UINT256 NOT NULL,                  -- 市值或成交额
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,
