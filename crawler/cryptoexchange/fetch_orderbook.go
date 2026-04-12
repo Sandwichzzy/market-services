@@ -96,11 +96,21 @@ func (bc *ExchangeOrderbook) syncOrderBookData() error {
 			if orderBook == nil {
 				continue
 			}
+			if len(orderBook.Asks) == 0 || len(orderBook.Bids) == 0 || len(orderBook.Asks[0]) == 0 || len(orderBook.Bids[0]) == 0 {
+				log.Warn("Order book is empty, skipping", "exchange", exchange.Name, "symbol", symbol.SymbolName)
+				continue
+			}
 			askPrice := orderBook.Asks[0][0]
 			bidPrice := orderBook.Bids[0][0]
 			avgPrice := (askPrice + bidPrice) / 2
 			key := exchange.Guid + "%" + exchange.Name + "%" + symbol.Guid + "%" + symbol.SymbolName
 			log.Info("Fetch orderbook success", "key", key, "askPrice", askPrice, "bidPrice", bidPrice, "avgPrice", avgPrice)
+
+			err = bc.db.ExchangeSymbol.UpdateExchangeSymbolPrice(exchangeSymbol.Guid, avgPrice, askPrice, bidPrice)
+			if err != nil {
+				log.Error("Update exchange_symbol price fail", "exchange", exchange.Name, "symbol", symbol.SymbolName, "error", err)
+				return err
+			}
 
 			err = bc.redisCli.Set(bc.resourceCtx, key, avgPrice, time.Second*600)
 			if err != nil {

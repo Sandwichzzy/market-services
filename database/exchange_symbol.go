@@ -35,6 +35,7 @@ type ExchangeSymbolDB interface {
 
 	StoreExchangeSymbols([]ExchangeSymbol) error
 	StoreExchangeSymbol(*ExchangeSymbol) error
+	UpdateExchangeSymbolPrice(guid string, price, askPrice, bidPrice float64) error
 }
 
 type exchangeSymbolDB struct {
@@ -92,6 +93,20 @@ func (e *exchangeSymbolDB) StoreExchangeSymbols(list []ExchangeSymbol) error {
 func (e *exchangeSymbolDB) StoreExchangeSymbol(item *ExchangeSymbol) error {
 	if err := e.gorm.Table("exchange_symbol").Create(item).Error; err != nil {
 		log.Error("Failed to store exchange_symbol", "error", err)
+		return err
+	}
+	return nil
+}
+
+func (e *exchangeSymbolDB) UpdateExchangeSymbolPrice(guid string, price, askPrice, bidPrice float64) error {
+	updates := map[string]any{
+		"price":      price,
+		"ask_price":  askPrice,
+		"bid_price":  bidPrice,
+		"updated_at": time.Now(),
+	}
+	if err := e.gorm.Table("exchange_symbol").Where("guid = ?", guid).Updates(updates).Error; err != nil {
+		log.Error("Failed to update exchange_symbol price", "guid", guid, "error", err)
 		return err
 	}
 	return nil
