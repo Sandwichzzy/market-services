@@ -8,6 +8,64 @@ import (
 	"github.com/Sandwichzzy/market-services/database"
 )
 
+func TestAggregateMarketPriceRecords(t *testing.T) {
+	symbolBTC := &database.Symbol{Guid: "btc-guid", SymbolName: "BTC/USDT"}
+	symbolETH := &database.Symbol{Guid: "eth-guid", SymbolName: "ETH/USDT"}
+
+	got, err := aggregateMarketPriceRecords([]marketPriceRecord{
+		{
+			symbol:           symbolBTC,
+			price:            "100",
+			askPrice:         "101",
+			bidPrice:         "99",
+			baseAssetSymbol:  "BTC",
+			quoteAssetSymbol: "USDT",
+		},
+		{
+			symbol:           symbolBTC,
+			price:            "110",
+			askPrice:         "100.5",
+			bidPrice:         "100",
+			baseAssetSymbol:  "BTC",
+			quoteAssetSymbol: "USDT",
+		},
+		{
+			symbol:           symbolETH,
+			price:            "200",
+			askPrice:         "201",
+			bidPrice:         "199",
+			baseAssetSymbol:  "ETH",
+			quoteAssetSymbol: "USDT",
+		},
+	})
+	if err != nil {
+		t.Fatalf("aggregateMarketPriceRecords: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len(got) = %d, want 2", len(got))
+	}
+
+	if got[0].symbol.Guid != "btc-guid" {
+		t.Fatalf("first symbol guid = %q, want %q", got[0].symbol.Guid, "btc-guid")
+	}
+	if got[0].price != "105" {
+		t.Fatalf("btc price = %q, want %q", got[0].price, "105")
+	}
+	if got[0].askPrice != "100.5" {
+		t.Fatalf("btc askPrice = %q, want %q", got[0].askPrice, "100.5")
+	}
+	if got[0].bidPrice != "100" {
+		t.Fatalf("btc bidPrice = %q, want %q", got[0].bidPrice, "100")
+	}
+
+	if got[1].symbol.Guid != "eth-guid" {
+		t.Fatalf("second symbol guid = %q, want %q", got[1].symbol.Guid, "eth-guid")
+	}
+	if got[1].price != "200" {
+		t.Fatalf("eth price = %q, want %q", got[1].price, "200")
+	}
+}
+
 func TestBuildSymbolMarketCurrency(t *testing.T) {
 	snapshotTime := time.Date(2026, 4, 12, 10, 0, 0, 0, time.UTC)
 	currency := &database.Currency{

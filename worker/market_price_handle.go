@@ -32,7 +32,7 @@ type MarketPriceHandle struct {
 // Redis 负责提供价格字段，CMC 负责补充基础币级别的 volume / market cap。
 type marketPriceRecord struct {
 	symbol           *database.Symbol
-	avgPrice         string
+	price            string
 	askPrice         string
 	bidPrice         string
 	baseAssetSymbol  string
@@ -172,13 +172,18 @@ func (mph *MarketPriceHandle) onPriceData() error {
 
 			records = append(records, marketPriceRecord{
 				symbol:           symbol,
-				avgPrice:         avgPrice,
+				price:            avgPrice,
 				askPrice:         askPrice,
 				bidPrice:         bidPrice,
 				baseAssetSymbol:  baseAssetSymbol,
 				quoteAssetSymbol: assetSymbolByGUID[symbol.QuoteAssetGuid], //symbol计价资产（USDT）在asset表
 			})
 		}
+	}
+
+	aggregatedRecords, err := aggregateMarketPriceRecords(records)
+	if err != nil {
+		return err
 	}
 
 	cmcQuotes := make(map[string]cmcQuote)
@@ -198,9 +203,9 @@ func (mph *MarketPriceHandle) onPriceData() error {
 		}
 	}
 
-	for _, record := range records {
+	for _, record := range aggregatedRecords {
 		guid, _ := uuid.NewUUID()
-		radio := strconv.FormatFloat(mph.calcRate(record.symbol.Guid, record.avgPrice), 'f', 2, 64)
+		radio := strconv.FormatFloat(mph.calcRate(record.symbol.Guid, record.price), 'f', 2, 64)
 		volume := "0"
 		marketCap := "0"
 		snapshotTime := time.Now()
@@ -220,7 +225,7 @@ func (mph *MarketPriceHandle) onPriceData() error {
 		dataSymbolMk := &database.SymbolMarket{
 			Guid:       guid.String(),
 			SymbolGuid: record.symbol.Guid,
-			Price:      record.avgPrice,
+			Price:      record.price,
 			AskPrice:   record.askPrice,
 			BidPrice:   record.bidPrice,
 			Volume:     volume,
@@ -248,6 +253,87 @@ func (mph *MarketPriceHandle) onPriceData() error {
 	return nil
 }
 
+// aggregateMarketPriceRecords 按 symbol 聚合多个交易所的价格快照。
+// price 取简单均价，ask_price 取全市场最小 ask，bid_price 取全市场最大 bid。
+func aggregateMarketPriceRecords(records []marketPriceRecord) ([]marketPriceRecord, error) {
+	// marketPriceAccumulator 只作为当前函数的临时聚合状态使用。
+	type marketPriceAccumulator struct {
+		symbol           *database.Symbol
+		baseAssetSymbol  string
+		quoteAssetSymbol string
+		priceSum         decimal.Decimal
+		minAskPrice      decimal.Decimal
+		maxBidPrice      decimal.Decimal
+		count            int64
+	}
+
+	accumulators := make(map[string]*marketPriceAccumulator)
+	for _, record := range records {
+		// Redis 中价格以字符串保存，这里先转成 decimal，避免浮点精度误差。
+		avgPrice, err := decimal.NewFromString(record.price)
+		if err != nil {
+			return nil, fmt.Errorf("parse avg price for %s: %w", record.symbol.SymbolName, err)
+		}
+		askPrice, err := decimal.NewFromString(record.askPrice)
+		if err != nil {
+			return nil, fmt.Errorf("parse ask price for %s: %w", record.symbol.SymbolName, err)
+		}
+		bidPrice, err := decimal.NewFromString(record.bidPrice)
+		if err != nil {
+			return nil, fmt.Errorf("parse bid price for %s: %w", record.symbol.SymbolName, err)
+		}
+
+		accumulator, exists := accumulators[record.symbol.Guid]
+		if !exists {
+			// 每个 symbol 首次出现时初始化聚合状态。
+			accumulators[record.symbol.Guid] = &marketPriceAccumulator{
+				symbol:           record.symbol,
+				baseAssetSymbol:  record.baseAssetSymbol,
+				quoteAssetSymbol: record.quoteAssetSymbol,
+				priceSum:         avgPrice,
+				minAskPrice:      askPrice,
+				maxBidPrice:      bidPrice,
+				count:            1,
+			}
+			continue
+		}
+
+		// price 用于后续求简单均价；ask/bid 分别保留全市场最优报价。
+		accumulator.priceSum = accumulator.priceSum.Add(avgPrice)
+		if askPrice.LessThan(accumulator.minAskPrice) {
+			accumulator.minAskPrice = askPrice
+		}
+		if bidPrice.GreaterThan(accumulator.maxBidPrice) {
+			accumulator.maxBidPrice = bidPrice
+		}
+		accumulator.count++
+	}
+
+	// 对 key 排序，保证聚合输出顺序稳定，便于测试和排查日志。
+	keys := make([]string, 0, len(accumulators))
+	for key := range accumulators {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	result := make([]marketPriceRecord, 0, len(keys))
+	for _, key := range keys {
+		accumulator := accumulators[key]
+		// price 是所有交易所该 symbol 中间价的简单平均值。
+		avgPrice := accumulator.priceSum.Div(decimal.NewFromInt(accumulator.count))
+		result = append(result, marketPriceRecord{
+			symbol:           accumulator.symbol,
+			price:            avgPrice.String(),
+			askPrice:         accumulator.minAskPrice.String(),
+			bidPrice:         accumulator.maxBidPrice.String(),
+			baseAssetSymbol:  accumulator.baseAssetSymbol,
+			quoteAssetSymbol: accumulator.quoteAssetSymbol,
+		})
+	}
+
+	return result, nil
+}
+
 // storeSymbolMarketCurrencies 为单条聚合行情生成所有启用法币的最新态价格并幂等入库。
 // 当前仅在行情计价资产可映射到基础法币体系时执行写入，避免错误换算。
 func storeSymbolMarketCurrencies(db *database.DB, record marketPriceRecord, currencies []*database.Currency, baseCurrency string, snapshotTime time.Time) error {
@@ -261,7 +347,7 @@ func storeSymbolMarketCurrencies(db *database.DB, record marketPriceRecord, curr
 
 	items := make([]database.SymbolMarketCurrency, 0, len(currencies))
 	for _, currency := range currencies {
-		data, err := buildSymbolMarketCurrency(record.symbol.Guid, currency, record.avgPrice, record.askPrice, record.bidPrice, snapshotTime)
+		data, err := buildSymbolMarketCurrency(record.symbol.Guid, currency, record.price, record.askPrice, record.bidPrice, snapshotTime)
 		if err != nil {
 			return fmt.Errorf("build symbol_market_currency for %s/%s: %w", record.symbol.SymbolName, currency.CurrencyCode, err)
 		}
