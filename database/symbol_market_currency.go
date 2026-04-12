@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SymbolMarketCurrency struct {
@@ -32,6 +33,7 @@ type SymbolMarketCurrencyDB interface {
 
 	StoreSymbolMarketCurrencies([]SymbolMarketCurrency) error
 	StoreSymbolMarketCurrency(*SymbolMarketCurrency) error
+	UpsertSymbolMarketCurrencies([]SymbolMarketCurrency) error
 }
 
 type symbolMarketCurrencyDB struct {
@@ -74,7 +76,7 @@ func (s *symbolMarketCurrencyDB) QuerySymbolMarketCurrencyList(page, pageSize in
 	return list, total, nil
 }
 
-// StoreSymbolMarketCurrencies 批量写入法币行情快照。
+// StoreSymbolMarketCurrencies 批量写入法币行情记录。
 func (s *symbolMarketCurrencyDB) StoreSymbolMarketCurrencies(list []SymbolMarketCurrency) error {
 	if err := s.gorm.Table("symbol_market_currency").
 		CreateInBatches(&list, len(list)).Error; err != nil {
@@ -84,11 +86,39 @@ func (s *symbolMarketCurrencyDB) StoreSymbolMarketCurrencies(list []SymbolMarket
 	return nil
 }
 
-// StoreSymbolMarketCurrency 写入单条法币行情快照。
+// StoreSymbolMarketCurrency 写入单条法币行情记录。
 func (s *symbolMarketCurrencyDB) StoreSymbolMarketCurrency(data *SymbolMarketCurrency) error {
 	if err := s.gorm.Table("symbol_market_currency").
 		Create(&data).Error; err != nil {
 		log.Error("Failed to store symbol_market_currency", "error", err)
+		return err
+	}
+	return nil
+}
+
+// UpsertSymbolMarketCurrencies 按交易对和法币维度幂等写入最新态行情。
+// 若记录已存在，则只更新价格字段、状态和 updated_at，保留原 created_at。
+func (s *symbolMarketCurrencyDB) UpsertSymbolMarketCurrencies(list []SymbolMarketCurrency) error {
+	if len(list) == 0 {
+		return nil
+	}
+
+	if err := s.gorm.Table("symbol_market_currency").
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "symbol_guid"},
+				{Name: "currency_guid"},
+			},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"price",
+				"ask_price",
+				"bid_price",
+				"is_active",
+				"updated_at",
+			}),
+		}).
+		CreateInBatches(&list, len(list)).Error; err != nil {
+		log.Error("Failed to upsert symbol_market_currency list", "error", err)
 		return err
 	}
 	return nil

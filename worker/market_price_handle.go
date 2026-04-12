@@ -248,7 +248,7 @@ func (mph *MarketPriceHandle) onPriceData() error {
 	return nil
 }
 
-// storeSymbolMarketCurrencies 为单条聚合行情生成所有启用法币的换算快照并入库。
+// storeSymbolMarketCurrencies 为单条聚合行情生成所有启用法币的最新态价格并幂等入库。
 // 当前仅在行情计价资产可映射到基础法币体系时执行写入，避免错误换算。
 func storeSymbolMarketCurrencies(db *database.DB, record marketPriceRecord, currencies []*database.Currency, baseCurrency string, snapshotTime time.Time) error {
 	if !supportsFiatConversion(record.quoteAssetSymbol, baseCurrency) {
@@ -259,19 +259,21 @@ func storeSymbolMarketCurrencies(db *database.DB, record marketPriceRecord, curr
 		return nil
 	}
 
+	items := make([]database.SymbolMarketCurrency, 0, len(currencies))
 	for _, currency := range currencies {
 		data, err := buildSymbolMarketCurrency(record.symbol.Guid, currency, record.avgPrice, record.askPrice, record.bidPrice, snapshotTime)
 		if err != nil {
 			return fmt.Errorf("build symbol_market_currency for %s/%s: %w", record.symbol.SymbolName, currency.CurrencyCode, err)
 		}
-		if err := db.SymbolMarketCurrency.StoreSymbolMarketCurrency(data); err != nil {
-			return fmt.Errorf("store symbol_market_currency for %s/%s: %w", record.symbol.SymbolName, currency.CurrencyCode, err)
-		}
+		items = append(items, *data)
+	}
+	if err := db.SymbolMarketCurrency.UpsertSymbolMarketCurrencies(items); err != nil {
+		return fmt.Errorf("upsert symbol_market_currency for %s: %w", record.symbol.SymbolName, err)
 	}
 	return nil
 }
 
-// buildSymbolMarketCurrency 将一条基础行情按指定法币汇率换算成法币快照对象。
+// buildSymbolMarketCurrency 将一条基础行情按指定法币汇率换算成法币最新态对象。
 // 这里负责统一换算 price、ask_price、bid_price，并填充公共元数据字段。
 func buildSymbolMarketCurrency(symbolGUID string, currency *database.Currency, price, askPrice, bidPrice string, snapshotTime time.Time) (*database.SymbolMarketCurrency, error) {
 	convertedPrice, err := convertPriceByRate(price, currency.Rate)
