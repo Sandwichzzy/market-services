@@ -28,7 +28,7 @@ func (SymbolMarket) TableName() string {
 
 type SymbolMarketView interface {
 	QuerySymbolMarketList(page, pageSize int64) ([]*SymbolMarket, int64, error)
-	QuerySymbolMarketTodayFirstData() (*SymbolMarket, error)
+	QuerySymbolMarketTodayFirstDataBySymbol(symbolGuid string) (*SymbolMarket, error)
 }
 
 type SymbolMarketDB interface {
@@ -76,14 +76,21 @@ func (s *symbolMarketDB) QuerySymbolMarketList(page, pageSize int64) ([]*SymbolM
 	return list, total, nil
 }
 
-func (s *symbolMarketDB) QuerySymbolMarketTodayFirstData() (*SymbolMarket, error) {
+// QuerySymbolMarketTodayFirstDataBySymbol 查询指定交易对当日最早的一条行情快照。
+// 若当日尚无数据，返回 (nil, nil)，由上层按“首条记录”场景处理。
+func (s *symbolMarketDB) QuerySymbolMarketTodayFirstDataBySymbol(symbolGuid string) (*SymbolMarket, error) {
 	var symbolMarket *SymbolMarket
 	now := time.Now().UTC()
 	utcStartOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	if err := s.gorm.Table("symbol_market").Where("created_at > ?", utcStartOfDay).First(&symbolMarket).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("QuerySymbolMarketTodayFirstData error", "error", err)
+	if err := s.gorm.Table("symbol_market").
+		Where("symbol_guid = ? AND created_at > ?", symbolGuid, utcStartOfDay).
+		Order("created_at ASC").
+		Order("guid ASC").
+		First(&symbolMarket).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
 		}
+		log.Error("QuerySymbolMarketTodayFirstDataBySymbol error", "symbol_guid", symbolGuid, "error", err)
 		return nil, err
 	}
 	return symbolMarket, nil

@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -198,7 +199,7 @@ func (mph *MarketPriceHandle) onPriceData() error {
 
 	for _, record := range records {
 		guid, _ := uuid.NewUUID()
-		radio := strconv.FormatFloat(mph.calcRate(record.avgPrice), 'f', 2, 64)
+		radio := strconv.FormatFloat(mph.calcRate(record.symbol.Guid, record.avgPrice), 'f', 2, 64)
 		volume := "0"
 		marketCap := "0"
 		snapshotTime := time.Now()
@@ -327,10 +328,13 @@ func supportsFiatConversion(quoteAssetSymbol, baseCurrency string) bool {
 
 // calcRate 计算当前价格相对今日首条记录的涨跌幅。
 // 若当日无历史数据或价格异常，则保守返回 0。
-func (mph *MarketPriceHandle) calcRate(curPrice string) float64 {
-	marketDataPrice, err := mph.db.SymbolMarket.QuerySymbolMarketTodayFirstData()
+func (mph *MarketPriceHandle) calcRate(symbolGuid, curPrice string) float64 {
+	marketDataPrice, err := mph.db.SymbolMarket.QuerySymbolMarketTodayFirstDataBySymbol(symbolGuid)
 	if err != nil {
-		log.Warn("No historical data found, using 0 as initial rate", "error", err)
+		log.Error("Query symbol market first data fail", "symbol_guid", symbolGuid, "error", err)
+		return 0
+	}
+	if marketDataPrice == nil {
 		return 0
 	}
 
@@ -346,14 +350,32 @@ func (mph *MarketPriceHandle) calcRate(curPrice string) float64 {
 		return 0
 	}
 
-	// 防止除以零
+	return calculateRate(currentPrice, firstPrice)
+}
+
+// calculateRate 计算涨跌幅，并将结果限制在数据库约束允许的区间内。
+func calculateRate(currentPrice, firstPrice float64) float64 {
 	if firstPrice == 0 {
 		log.Warn("First price is zero, cannot calculate rate")
 		return 0
 	}
 
 	radio := (currentPrice - firstPrice) / firstPrice
-	return radio
+	return clampRate(radio)
+}
+
+// clampRate 确保涨跌幅满足 symbol_market.radio 的数据库约束。
+func clampRate(rate float64) float64 {
+	if math.IsNaN(rate) || math.IsInf(rate, 0) {
+		return 0
+	}
+	if rate < -1 {
+		return -1
+	}
+	if rate > 10 {
+		return 10
+	}
+	return rate
 }
 
 func (mph *MarketPriceHandle) Stop() error {
