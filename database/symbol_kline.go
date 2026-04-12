@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SymbolKline struct {
@@ -34,6 +35,7 @@ type SymbolKlineDB interface {
 
 	StoreSymbolKlines([]SymbolKline) error
 	StoreSymbolKline(*SymbolKline) error
+	UpsertSymbolKlines([]SymbolKline) error
 }
 
 type symbolKlineDB struct {
@@ -87,6 +89,36 @@ func (s *symbolKlineDB) StoreSymbolKline(data *SymbolKline) error {
 	if err := s.gorm.Table("symbol_kline").
 		Create(&data).Error; err != nil {
 		log.Error("Failed to store symbol_kline", "error", err)
+		return err
+	}
+	return nil
+}
+
+// UpsertSymbolKlines 按交易对和 K 线时间幂等写入聚合 K 线。
+func (s *symbolKlineDB) UpsertSymbolKlines(list []SymbolKline) error {
+	if len(list) == 0 {
+		return nil
+	}
+
+	if err := s.gorm.Table("symbol_kline").
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "symbol_guid"},
+				{Name: "created_at"},
+			},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"open_price",
+				"close_price",
+				"high_price",
+				"low_price",
+				"volume",
+				"market_cap",
+				"is_active",
+				"updated_at",
+			}),
+		}).
+		CreateInBatches(&list, len(list)).Error; err != nil {
+		log.Error("Failed to upsert symbol_kline list", "error", err)
 		return err
 	}
 	return nil

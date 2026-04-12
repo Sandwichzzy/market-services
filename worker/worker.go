@@ -13,6 +13,7 @@ import (
 
 type Worker struct {
 	marketPriceHandle *MarketPriceHandle
+	symbolKlineHandle *SymbolKlineHandle
 	stopped           atomic.Bool
 }
 
@@ -22,9 +23,15 @@ func NewWorker(db *database.DB, redisClient *redis.Client, config *config.Config
 		log.Error("Failed to create MarketPriceHandle", "error", err)
 		return nil, err
 	}
+	symbolKlineHandle, err := NewSymbolKlineHandle(db, shutdown)
+	if err != nil {
+		log.Error("Failed to create SymbolKlineHandle", "error", err)
+		return nil, err
+	}
 
 	return &Worker{
 		marketPriceHandle: marketPriceHandle,
+		symbolKlineHandle: symbolKlineHandle,
 	}, nil
 }
 
@@ -33,6 +40,10 @@ func (w *Worker) Start(ctx context.Context) error {
 
 	if err := w.marketPriceHandle.Start(); err != nil {
 		log.Error("Failed to start MarketPriceHandle", "error", err)
+		return err
+	}
+	if err := w.symbolKlineHandle.Start(); err != nil {
+		log.Error("Failed to start SymbolKlineHandle", "error", err)
 		return err
 	}
 
@@ -46,6 +57,13 @@ func (w *Worker) Stop(ctx context.Context) error {
 	if w.marketPriceHandle != nil {
 		if err := w.marketPriceHandle.Stop(); err != nil {
 			log.Error("Failed to stop MarketPriceHandle", "error", err)
+			w.stopped.Store(true)
+			return err
+		}
+	}
+	if w.symbolKlineHandle != nil {
+		if err := w.symbolKlineHandle.Stop(); err != nil {
+			log.Error("Failed to stop SymbolKlineHandle", "error", err)
 			w.stopped.Store(true)
 			return err
 		}
