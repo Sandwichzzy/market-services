@@ -11,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+const orderbookSyncInterval = time.Second * 10
+
 type ExchangeOrderbook struct {
 	db             *database.DB
 	redisCli       *redis.Client
@@ -48,7 +50,7 @@ func (bc *ExchangeOrderbook) Close() error {
 
 func (bc *ExchangeOrderbook) Start() error {
 	bc.tasks.Go(func() error {
-		tickerOperator := time.NewTicker(time.Second * 10)
+		tickerOperator := time.NewTicker(orderbookSyncInterval)
 		defer tickerOperator.Stop()
 		for {
 			select {

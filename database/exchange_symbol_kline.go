@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ExchangeSymbolKline struct {
@@ -28,6 +29,7 @@ func (ExchangeSymbolKline) TableName() string {
 
 type ExchangeSymbolKlineView interface {
 	QueryExchangeSymbolKlineList(page, pageSize int64) ([]*ExchangeSymbolKline, int64, error)
+	QueryExchangeSymbolKlinesSince(since time.Time) ([]*ExchangeSymbolKline, error)
 }
 
 type ExchangeSymbolKlineDB interface {
@@ -35,6 +37,7 @@ type ExchangeSymbolKlineDB interface {
 
 	StoreExchangeSymbolKlines([]ExchangeSymbolKline) error
 	StoreExchangeSymbolKline(*ExchangeSymbolKline) error
+	UpsertExchangeSymbolKlines([]ExchangeSymbolKline) error
 }
 
 type exchangeSymbolKlineDB struct {
@@ -75,10 +78,56 @@ func (e *exchangeSymbolKlineDB) QueryExchangeSymbolKlineList(page, pageSize int6
 	return list, total, nil
 }
 
+// QueryExchangeSymbolKlinesSince 查询指定时间之后的交易所 K 线快照。
+func (e *exchangeSymbolKlineDB) QueryExchangeSymbolKlinesSince(since time.Time) ([]*ExchangeSymbolKline, error) {
+	var list []*ExchangeSymbolKline
+	if err := e.gorm.Table("exchange_symbol_kline").
+		Where("created_at >= ? AND is_active = ?", since, true).
+		Order("created_at ASC").
+		Find(&list).Error; err != nil {
+		log.Error("Failed to query exchange_symbol_kline by since", "since", since, "error", err)
+		return nil, err
+	}
+	return list, nil
+}
+
 func (e *exchangeSymbolKlineDB) StoreExchangeSymbolKlines(list []ExchangeSymbolKline) error {
 	if err := e.gorm.Table("exchange_symbol_kline").
 		CreateInBatches(&list, len(list)).Error; err != nil {
 		log.Error("Failed to store exchange_symbol_kline list", "error", err)
+		return err
+	}
+	return nil
+}
+
+// UpsertExchangeSymbolKlines 按交易所、交易对和 K 线时间幂等写入数据。
+// 不存在的行插入，已存在的行更新
+func (e *exchangeSymbolKlineDB) UpsertExchangeSymbolKlines(list []ExchangeSymbolKline) error {
+	if len(list) == 0 {
+		return nil
+	}
+
+	//Clauses 是 GORM 里用来给 SQL 附加额外子句 的方法
+	if err := e.gorm.Table("exchange_symbol_kline").
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "exchange_guid"},
+				{Name: "symbol_guid"},
+				{Name: "created_at"},
+			}, //这里定义了“什么叫冲突”
+			DoUpdates: clause.AssignmentColumns([]string{
+				"open_price",
+				"close_price",
+				"high_price",
+				"low_price",
+				"volume",
+				"market_cap",
+				"is_active",
+				"updated_at",
+			}), //冲突就更新这些字段
+		}).
+		CreateInBatches(&list, len(list)).Error; err != nil {
+		log.Error("Failed to upsert exchange_symbol_kline list", "error", err)
 		return err
 	}
 	return nil

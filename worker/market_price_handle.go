@@ -101,6 +101,7 @@ func (mph *MarketPriceHandle) Start() error {
 // 2. 从 Redis 读取交易对最新价格
 // 3. 收集并去重基础币 symbol，批量请求 CMC
 // 4. 将 Redis 价格与 CMC 市值/成交量合并后写入 symbol_market
+// 5. 事务处理SymbolMarketCurrencies 和 symbol_market 入库
 func (mph *MarketPriceHandle) onPriceData() error {
 	assetList, err := mph.db.Asset.QueryAssets()
 	if err != nil {

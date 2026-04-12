@@ -113,3 +113,42 @@ func (ec *ExchangeClient) FetchOrderBook(exchangeName, symbol string) (*ccxt.Ord
 	}
 	return &orderBook, nil
 }
+
+// FetchOHLCV 按交易所名称和交易对抓取统一格式的 OHLCV 数据。
+// timeframe、since、limit 会透传给 CCXT，用于控制 K 线周期和拉取范围。
+func (ec *ExchangeClient) FetchOHLCV(exchangeName, symbol, timeframe string, since, limit int64) ([]ccxt.OHLCV, error) {
+	options := make([]ccxt.FetchOHLCVOptions, 0, 3)
+	if timeframe != "" {
+		options = append(options, ccxt.WithFetchOHLCVTimeframe(timeframe))
+	}
+	if since > 0 {
+		options = append(options, ccxt.WithFetchOHLCVSince(since))
+	}
+	if limit > 0 {
+		options = append(options, ccxt.WithFetchOHLCVLimit(limit))
+	}
+
+	switch exchangeName {
+	case "Binance":
+		if ec.BinanceClient == nil {
+			log.Warn("Binance client not initialized, skipping OHLCV")
+			return nil, nil
+		}
+		return ec.BinanceClient.FetchOHLCV(symbol, options...)
+	case "OKX":
+		if ec.OxkClient == nil {
+			log.Warn("OKX client not initialized, skipping OHLCV")
+			return nil, nil
+		}
+		return ec.OxkClient.FetchOHLCV(symbol, options...)
+	case "Bybit":
+		if ec.BybitClient == nil {
+			log.Warn("Bybit client not initialized, skipping OHLCV")
+			return nil, nil
+		}
+		return ec.BybitClient.FetchOHLCV(symbol, options...)
+	default:
+		log.Warn("Unsupported exchange for OHLCV", "exchangeName", exchangeName)
+		return nil, nil
+	}
+}
