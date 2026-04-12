@@ -98,6 +98,8 @@ func (e *exchangeSymbolDB) StoreExchangeSymbol(item *ExchangeSymbol) error {
 	return nil
 }
 
+// UpdateExchangeSymbolPrice 按关联记录 GUID 回写交易所交易对的最新价格快照。
+// 该方法只更新盘口相关字段和 updated_at，不影响 volume、radio 等其他业务字段。
 func (e *exchangeSymbolDB) UpdateExchangeSymbolPrice(guid string, price, askPrice, bidPrice float64) error {
 	updates := map[string]any{
 		"price":      price,

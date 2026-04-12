@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Sandwichzzy/market-services/common/tasks"
@@ -13,12 +14,14 @@ import (
 	"github.com/Sandwichzzy/market-services/redis"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type MarketPriceHandle struct {
 	db             *database.DB
 	redisCli       *redis.Client
 	cmcClient      *coinMarketCapClient // 用于补全市值和 24h 交易量
+	baseCurrency   string
 	resourceCtx    context.Context
 	resourceCancel context.CancelFunc
 	tasks          tasks.Group
@@ -27,11 +30,12 @@ type MarketPriceHandle struct {
 // marketPriceRecord 表示一条待入库的市场价快照。
 // Redis 负责提供价格字段，CMC 负责补充基础币级别的 volume / market cap。
 type marketPriceRecord struct {
-	symbol          *database.Symbol
-	avgPrice        string
-	askPrice        string
-	bidPrice        string
-	baseAssetSymbol string
+	symbol           *database.Symbol
+	avgPrice         string
+	askPrice         string
+	bidPrice         string
+	baseAssetSymbol  string
+	quoteAssetSymbol string
 }
 
 // NewMarketPriceHandle 创建 worker 的市场价处理器。
@@ -54,6 +58,7 @@ func NewMarketPriceHandle(db *database.DB, redisCli *redis.Client, cfg *config.C
 		db:             db,
 		redisCli:       redisCli,
 		cmcClient:      cmcClient,
+		baseCurrency:   cfg.BaseCurrency, //USDT
 		resourceCtx:    resourceCtx,
 		resourceCancel: resourceCancel,
 		tasks: tasks.Group{
@@ -105,6 +110,11 @@ func (mph *MarketPriceHandle) onPriceData() error {
 	assetSymbolByGUID := make(map[string]string, len(assetList))
 	for _, asset := range assetList {
 		assetSymbolByGUID[asset.Guid] = asset.AssetSymbol
+	}
+	currencies, err := mph.db.Currency.QueryActiveCurrency()
+	if err != nil {
+		log.Error("Query currencies fail", "error", err)
+		return err
 	}
 
 	exchangeList, err := mph.db.Exchange.QueryExchanges()
@@ -159,11 +169,12 @@ func (mph *MarketPriceHandle) onPriceData() error {
 			}
 
 			records = append(records, marketPriceRecord{
-				symbol:          symbol,
-				avgPrice:        avgPrice,
-				askPrice:        askPrice,
-				bidPrice:        bidPrice,
-				baseAssetSymbol: baseAssetSymbol,
+				symbol:           symbol,
+				avgPrice:         avgPrice,
+				askPrice:         askPrice,
+				bidPrice:         bidPrice,
+				baseAssetSymbol:  baseAssetSymbol,
+				quoteAssetSymbol: assetSymbolByGUID[symbol.QuoteAssetGuid], //symbol计价资产（USDT）在asset表
 			})
 		}
 	}
@@ -190,6 +201,7 @@ func (mph *MarketPriceHandle) onPriceData() error {
 		radio := strconv.FormatFloat(mph.calcRate(record.avgPrice), 'f', 2, 64)
 		volume := "0"
 		marketCap := "0"
+		snapshotTime := time.Now()
 
 		if record.baseAssetSymbol != "" {
 			quote, ok := cmcQuotes[record.baseAssetSymbol]
@@ -213,16 +225,104 @@ func (mph *MarketPriceHandle) onPriceData() error {
 			MarketCap:  marketCap,
 			Radio:      radio,
 			IsActive:   true,
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
+			CreatedAt:  snapshotTime,
+			UpdatedAt:  snapshotTime,
 		}
-		err = mph.db.SymbolMarket.StoreSymbolMarket(dataSymbolMk)
+
+		err = mph.db.Transaction(func(tx *database.DB) error {
+			if err := tx.SymbolMarket.StoreSymbolMarket(dataSymbolMk); err != nil {
+				return err
+			}
+			if len(currencies) == 0 {
+				return nil
+			}
+			return storeSymbolMarketCurrencies(tx, record, currencies, mph.baseCurrency, snapshotTime)
+		})
 		if err != nil {
-			log.Error("Store symbol market fail", "error", err)
+			log.Error("Store symbol market snapshots fail", "symbol", record.symbol.SymbolName, "error", err)
 			return err
 		}
 	}
 	return nil
+}
+
+// storeSymbolMarketCurrencies 为单条聚合行情生成所有启用法币的换算快照并入库。
+// 当前仅在行情计价资产可映射到基础法币体系时执行写入，避免错误换算。
+func storeSymbolMarketCurrencies(db *database.DB, record marketPriceRecord, currencies []*database.Currency, baseCurrency string, snapshotTime time.Time) error {
+	if !supportsFiatConversion(record.quoteAssetSymbol, baseCurrency) {
+		log.Warn("Skip symbol_market_currency snapshot for unsupported quote asset",
+			"symbol", record.symbol.SymbolName,
+			"quote_asset", record.quoteAssetSymbol,
+			"base_currency", baseCurrency)
+		return nil
+	}
+
+	for _, currency := range currencies {
+		data, err := buildSymbolMarketCurrency(record.symbol.Guid, currency, record.avgPrice, record.askPrice, record.bidPrice, snapshotTime)
+		if err != nil {
+			return fmt.Errorf("build symbol_market_currency for %s/%s: %w", record.symbol.SymbolName, currency.CurrencyCode, err)
+		}
+		if err := db.SymbolMarketCurrency.StoreSymbolMarketCurrency(data); err != nil {
+			return fmt.Errorf("store symbol_market_currency for %s/%s: %w", record.symbol.SymbolName, currency.CurrencyCode, err)
+		}
+	}
+	return nil
+}
+
+// buildSymbolMarketCurrency 将一条基础行情按指定法币汇率换算成法币快照对象。
+// 这里负责统一换算 price、ask_price、bid_price，并填充公共元数据字段。
+func buildSymbolMarketCurrency(symbolGUID string, currency *database.Currency, price, askPrice, bidPrice string, snapshotTime time.Time) (*database.SymbolMarketCurrency, error) {
+	convertedPrice, err := convertPriceByRate(price, currency.Rate)
+	if err != nil {
+		return nil, fmt.Errorf("convert price: %w", err)
+	}
+	convertedAskPrice, err := convertPriceByRate(askPrice, currency.Rate)
+	if err != nil {
+		return nil, fmt.Errorf("convert ask price: %w", err)
+	}
+	convertedBidPrice, err := convertPriceByRate(bidPrice, currency.Rate)
+	if err != nil {
+		return nil, fmt.Errorf("convert bid price: %w", err)
+	}
+
+	return &database.SymbolMarketCurrency{
+		Guid:         uuid.New().String(),
+		SymbolGuid:   symbolGUID,
+		CurrencyGuid: currency.Guid,
+		Price:        convertedPrice,
+		AskPrice:     convertedAskPrice,
+		BidPrice:     convertedBidPrice,
+		IsActive:     currency.IsActive,
+		CreatedAt:    snapshotTime,
+		UpdatedAt:    snapshotTime,
+	}, nil
+}
+
+// convertPriceByRate 使用高精度 decimal 将字符串价格按汇率相乘，避免浮点精度损失。
+func convertPriceByRate(price string, rate float64) (string, error) {
+	priceDecimal, err := decimal.NewFromString(price)
+	if err != nil {
+		return "", err
+	}
+	rateDecimal := decimal.NewFromFloat(rate)
+	return priceDecimal.Mul(rateDecimal).String(), nil
+}
+
+// supportsFiatConversion 判断当前交易对的计价资产（比如USDT）是否支持直接换算到法币快照。
+// 目前支持基础法币自身计价，以及在基础法币为 USD 时将 USDT 视作等价美元处理。
+// quoteAssetSymbol：quoteAssetSymbol交易对里的“计价资产符号”，例子：BTC/USDT 里的 USDT
+// baseCurrency：法币汇率系统的“基础法币”，当前默认是 USD，来自 config.Config.BaseCurrency
+// BTC/BTC 或 BTC/ETH,这不是法币基础计价,直接乘法币汇率会错，所以返回 false
+func supportsFiatConversion(quoteAssetSymbol, baseCurrency string) bool {
+	normalizedQuoteAsset := strings.ToUpper(strings.TrimSpace(quoteAssetSymbol))
+	normalizedBaseCurrency := strings.ToUpper(strings.TrimSpace(baseCurrency))
+	if normalizedQuoteAsset == "" || normalizedBaseCurrency == "" {
+		return false
+	}
+	if normalizedQuoteAsset == normalizedBaseCurrency {
+		return true
+	}
+	return normalizedBaseCurrency == "USD" && normalizedQuoteAsset == "USDT"
 }
 
 // calcRate 计算当前价格相对今日首条记录的涨跌幅。

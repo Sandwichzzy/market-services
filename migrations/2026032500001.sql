@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS currency(
     guid               TEXT PRIMARY KEY DEFAULT replace(uuid_generate_v4()::text, '-', ''), -- 主键：法币唯一标识
     currency_name      VARCHAR(100) NOT NULL,                -- 法币名称（如 US Dollar）
     currency_code      VARCHAR(100) NOT NULL,                -- 法币代码（如 USD、CNY）
-    rate               NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (rate >= 0),         -- 汇率（相对基准货币）
+    rate               NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (rate >= 0),         -- 汇率（相对基准货币USD默认）
     buy_spread         NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (buy_spread >= 0),   -- 买入价差（加点）
     sell_spread        NUMERIC(65, 18) NOT NULL DEFAULT 0 CHECK (sell_spread >= 0),   -- 卖出价差（加点）
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,         -- 是否启用
