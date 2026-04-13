@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -11,7 +10,7 @@ import (
 
 func (h Routes) GetSupportAssets(w http.ResponseWriter, r *http.Request) {
 	var saReq model.SupportAssetRequest
-	if err := json.NewDecoder(r.Body).Decode(&saReq); err != nil {
+	if err := decodeJSON(r, &saReq); err != nil {
 		http.Error(w, "invalid JSON body", http.StatusBadRequest)
 		return
 	}

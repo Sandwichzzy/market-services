@@ -9,6 +9,11 @@ const (
 	InternalServerError = "Internal server error"
 )
 
+func decodeJSON(r *http.Request, out interface{}) error {
+	defer r.Body.Close()
+	return json.NewDecoder(r.Body).Decode(out)
+}
+
 func jsonResponse(w http.ResponseWriter, data interface{}, statusCode int) error {
 	w.Header().Set("Content-Type", "application/json")
 	jsonData, err := json.Marshal(data)

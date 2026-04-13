@@ -21,8 +21,15 @@ import (
 )
 
 const (
-	HealthPath       = "healthz"
-	SupportAssetPath = "/api/v1/get_support_assets"
+	HealthPath                  = "healthz"
+	SupportAssetPath            = "/api/v1/get_support_assets"
+	ListMarketSymbolsPath       = "/api/v1/list_market_symbols"
+	ListSymbolMarketsPath       = "/api/v1/list_symbol_markets"
+	GetSymbolMarketPath         = "/api/v1/get_symbol_market"
+	ListCurrenciesPath          = "/api/v1/list_currencies"
+	GetSymbolMarketCurrencyPath = "/api/v1/get_symbol_market_currency"
+	ListKlinesPath              = "/api/v1/list_klines"
+	ListExchangeKlinesPath      = "/api/v1/list_exchange_klines"
 )
 
 // APIConfig API 服务配置
@@ -98,7 +105,15 @@ func (a *API) initDB(ctx context.Context, cfg *config.Config) error {
 func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 
 	// 创建服务层实例
-	svc := service.NewHandleSvc(a.db.Asset)
+	svc := service.NewHandleSvc(
+		a.db.Asset,
+		a.db.Currency,
+		a.db.Symbol,
+		a.db.SymbolMarket,
+		a.db.SymbolMarketCurrency,
+		a.db.SymbolKline,
+		a.db.ExchangeSymbolKline,
+	)
 	// 创建路由器实例
 	apiRouter := chi.NewRouter()
 	// 创建路由处理器，连接服务层
@@ -122,6 +137,13 @@ func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
 	// 注册 API 路由
 	//post API
 	apiRouter.Post(fmt.Sprintf(SupportAssetPath), h.GetSupportAssets)
+	apiRouter.Post(fmt.Sprintf(ListMarketSymbolsPath), h.ListMarketSymbols)
+	apiRouter.Post(fmt.Sprintf(ListSymbolMarketsPath), h.ListSymbolMarkets)
+	apiRouter.Post(fmt.Sprintf(GetSymbolMarketPath), h.GetSymbolMarket)
+	apiRouter.Post(fmt.Sprintf(ListCurrenciesPath), h.ListCurrencies)
+	apiRouter.Post(fmt.Sprintf(GetSymbolMarketCurrencyPath), h.GetSymbolMarketCurrency)
+	apiRouter.Post(fmt.Sprintf(ListKlinesPath), h.ListKlines)
+	apiRouter.Post(fmt.Sprintf(ListExchangeKlinesPath), h.ListExchangeKlines)
 
 	a.router = apiRouter
 }
