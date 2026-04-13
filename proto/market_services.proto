@@ -1,8 +1,24 @@
 syntax = "proto3";
 
-option go_package="./services/grpc/proto";
-option java_package="xyz.MarketServer";
+option go_package = "./services/grpc/proto";
+option java_package = "xyz.MarketServer";
 package xyz.MarketServer;
+
+message PaginationRequest {
+  int64 page = 1;
+  int64 page_size = 2;
+}
+
+message PaginationResponse {
+  int64 page = 1;
+  int64 page_size = 2;
+  int64 total = 3;
+}
+
+//message BaseResponse {
+//  uint64 return_code = 1;
+//  string message = 2;
+//}
 
 message AssetItem {
   string guid = 1;
@@ -16,11 +32,226 @@ message SupportAssetRequest {
 }
 
 message SupportAssetResponse {
-  uint64 return_code =1;
+  uint64 return_code = 1;
   string message = 2;
   repeated AssetItem asset = 3;
 }
 
+message MarketSymbolItem {
+  string guid = 1;
+  string symbol_name = 2;
+  string base_asset_guid = 3;
+  string quote_asset_guid = 4;
+  string market_type = 5;
+  bool is_active = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}
+
+message ListMarketSymbolsRequest {
+  PaginationRequest pagination = 1;
+  bool only_active = 2;
+  string base_asset_guid = 3;
+  string quote_asset_guid = 4;
+  string market_type = 5;
+}
+
+message ListMarketSymbolsResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  PaginationResponse pagination = 3;
+  repeated MarketSymbolItem result = 4;
+}
+
+message SymbolMarketItem {
+  string guid = 1;
+  string symbol_guid = 2;
+  string price = 3;
+  string ask_price = 4;
+  string bid_price = 5;
+  string volume = 6;
+  string market_cap = 7;
+  string radio = 8;
+  bool is_active = 9;
+  int64 created_at = 10;
+  int64 updated_at = 11;
+}
+
+message ListSymbolMarketsRequest {
+  PaginationRequest pagination = 1;
+  bool only_active = 2;
+  string symbol_guid = 3;
+}
+
+message ListSymbolMarketsResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  PaginationResponse pagination = 3;
+  repeated SymbolMarketItem result = 4;
+}
+
+message GetSymbolMarketRequest {
+  string symbol_guid = 1;
+}
+
+message GetSymbolMarketResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  SymbolMarketItem result = 3;
+}
+
+message CurrencyItem {
+  string guid = 1;
+  string currency_name = 2;
+  string currency_code = 3;
+  string rate = 4;
+  string buy_spread = 5;
+  string sell_spread = 6;
+  bool is_active = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
+message ListCurrenciesRequest {
+  PaginationRequest pagination = 1;
+  bool only_active = 2;
+  string currency_code = 3;
+}
+
+message ListCurrenciesResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  PaginationResponse pagination = 3;
+  repeated CurrencyItem result = 4;
+}
+
+message SymbolMarketCurrencyItem {
+  string guid = 1;
+  string symbol_guid = 2;
+  string currency_guid = 3;
+  string price = 4;
+  string ask_price = 5;
+  string bid_price = 6;
+  bool is_active = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
+message ListSymbolMarketCurrenciesRequest {
+  PaginationRequest pagination = 1;
+  bool only_active = 2;
+  string symbol_guid = 3;
+  string currency_guid = 4;
+}
+
+message ListSymbolMarketCurrenciesResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  PaginationResponse pagination = 3;
+  repeated SymbolMarketCurrencyItem result = 4;
+}
+
+message GetSymbolMarketCurrencyRequest {
+  string symbol_guid = 1;
+  string currency_guid = 2;
+}
+
+message GetSymbolMarketCurrencyResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  SymbolMarketCurrencyItem result = 3;
+}
+
+enum KlineTimeframe {
+  KLINE_TIMEFRAME_UNSPECIFIED = 0;
+  KLINE_TIMEFRAME_1M = 1;
+}
+
+message SymbolKlineItem {
+  string guid = 1;
+  string symbol_guid = 2;
+  KlineTimeframe timeframe = 3;
+  string open_price = 4;
+  string close_price = 5;
+  string high_price = 6;
+  string low_price = 7;
+  string volume = 8;
+  string market_cap = 9;
+  bool is_active = 10;
+  int64 created_at = 11;
+  int64 updated_at = 12;
+}
+
+message ListKlinesRequest {
+  string symbol_guid = 1;
+  KlineTimeframe timeframe = 2;
+  int64 start_timestamp = 3;
+  int64 end_timestamp = 4;
+  PaginationRequest pagination = 5;
+  bool only_active = 6;
+}
+
+message ListKlinesResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  PaginationResponse pagination = 3;
+  repeated SymbolKlineItem result = 4;
+}
+
+message ExchangeSymbolKlineItem {
+  string guid = 1;
+  string exchange_guid = 2;
+  string symbol_guid = 3;
+  KlineTimeframe timeframe = 4;
+  string open_price = 5;
+  string close_price = 6;
+  string high_price = 7;
+  string low_price = 8;
+  string volume = 9;
+  string market_cap = 10;
+  bool is_active = 11;
+  int64 created_at = 12;
+  int64 updated_at = 13;
+}
+
+message ListExchangeKlinesRequest {
+  string symbol_guid = 1;
+  string exchange_guid = 2;
+  KlineTimeframe timeframe = 3;
+  int64 start_timestamp = 4;
+  int64 end_timestamp = 5;
+  PaginationRequest pagination = 6;
+  bool only_active = 7;
+}
+
+message ListExchangeKlinesResponse {
+  uint64 return_code = 1;
+  string message = 2;
+  PaginationResponse pagination = 3;
+  repeated ExchangeSymbolKlineItem result = 4;
+}
+
 service MarketServices {
-  rpc getSupportAsset(SupportAssetRequest) returns (SupportAssetResponse) {} //获取支持查询的资产列表
+  rpc getSupportAsset(SupportAssetRequest) returns (SupportAssetResponse) {}
+}
+
+service MarketSymbolService {
+  rpc listMarketSymbols(ListMarketSymbolsRequest) returns (ListMarketSymbolsResponse) {} //查询交易对基础信息
+  rpc listSymbolMarkets(ListSymbolMarketsRequest) returns (ListSymbolMarketsResponse) {} //查询聚合行情列表，支持按 symbol_guid 过滤
+  rpc getSymbolMarket(GetSymbolMarketRequest) returns (GetSymbolMarketResponse) {} //查询单个交易对最新聚合行情
+}
+
+service FiatCurrencyService {
+  rpc listCurrencies(ListCurrenciesRequest) returns (ListCurrenciesResponse) {} //查询法币汇率配置列表，支持 only_active
+  //查询交易对按法币换算后的行情，支持按symbol_guid、currency_guid 过滤
+  rpc listSymbolMarketCurrencies(ListSymbolMarketCurrenciesRequest) returns (ListSymbolMarketCurrenciesResponse) {}
+  //查询单个交易对在指定法币下的最新行情
+  rpc getSymbolMarketCurrency(GetSymbolMarketCurrencyRequest) returns (GetSymbolMarketCurrencyResponse) {}
+}
+
+service KlineService {
+  //查询聚合 K 线，必传 symbol_guid，支持 start_timestamp、end_timestamp、pagination
+  rpc listKlines(ListKlinesRequest) returns (ListKlinesResponse) {}
+  //查询交易所维度 K 线，必传 symbol_guid，可选 exchange_guid
+  rpc listExchangeKlines(ListExchangeKlinesRequest) returns (ListExchangeKlinesResponse) {}
 }
