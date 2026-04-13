@@ -29,6 +29,7 @@ func (ExchangeSymbolKline) TableName() string {
 
 type ExchangeSymbolKlineView interface {
 	QueryExchangeSymbolKlineList(page, pageSize int64) ([]*ExchangeSymbolKline, int64, error)
+	QueryExchangeSymbolKlineListByFilter(page, pageSize int64, exchangeGuid, symbolGuid string, onlyActive bool, startAt, endAt *time.Time) ([]*ExchangeSymbolKline, int64, error)
 	QueryExchangeSymbolKlinesSince(since time.Time) ([]*ExchangeSymbolKline, error)
 }
 
@@ -49,6 +50,10 @@ func NewExchangeSymbolKlineDB(db *gorm.DB) ExchangeSymbolKlineDB {
 }
 
 func (e *exchangeSymbolKlineDB) QueryExchangeSymbolKlineList(page, pageSize int64) ([]*ExchangeSymbolKline, int64, error) {
+	return e.QueryExchangeSymbolKlineListByFilter(page, pageSize, "", "", false, nil, nil)
+}
+
+func (e *exchangeSymbolKlineDB) QueryExchangeSymbolKlineListByFilter(page, pageSize int64, exchangeGuid, symbolGuid string, onlyActive bool, startAt, endAt *time.Time) ([]*ExchangeSymbolKline, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -60,6 +65,21 @@ func (e *exchangeSymbolKlineDB) QueryExchangeSymbolKlineList(page, pageSize int6
 
 	var list []*ExchangeSymbolKline
 	query := e.gorm.Model(&ExchangeSymbolKline{})
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if exchangeGuid != "" {
+		query = query.Where("exchange_guid = ?", exchangeGuid)
+	}
+	if symbolGuid != "" {
+		query = query.Where("symbol_guid = ?", symbolGuid)
+	}
+	if startAt != nil {
+		query = query.Where("created_at >= ?", *startAt)
+	}
+	if endAt != nil {
+		query = query.Where("created_at <= ?", *endAt)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -67,7 +87,7 @@ func (e *exchangeSymbolKlineDB) QueryExchangeSymbolKlineList(page, pageSize int6
 		return nil, 0, err
 	}
 
-	if err := query.Order("created_at DESC").
+	if err := query.Order("created_at ASC").
 		Limit(int(pageSize)).
 		Offset(int(offset)).
 		Find(&list).Error; err != nil {

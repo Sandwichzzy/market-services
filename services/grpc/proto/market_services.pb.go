@@ -1295,142 +1295,6 @@ func (x *SymbolMarketCurrencyItem) GetUpdatedAt() int64 {
 	return 0
 }
 
-type ListSymbolMarketCurrenciesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pagination    *PaginationRequest     `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
-	OnlyActive    bool                   `protobuf:"varint,2,opt,name=only_active,json=onlyActive,proto3" json:"only_active,omitempty"`
-	SymbolGuid    string                 `protobuf:"bytes,3,opt,name=symbol_guid,json=symbolGuid,proto3" json:"symbol_guid,omitempty"`
-	CurrencyGuid  string                 `protobuf:"bytes,4,opt,name=currency_guid,json=currencyGuid,proto3" json:"currency_guid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListSymbolMarketCurrenciesRequest) Reset() {
-	*x = ListSymbolMarketCurrenciesRequest{}
-	mi := &file_market_services_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListSymbolMarketCurrenciesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListSymbolMarketCurrenciesRequest) ProtoMessage() {}
-
-func (x *ListSymbolMarketCurrenciesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListSymbolMarketCurrenciesRequest.ProtoReflect.Descriptor instead.
-func (*ListSymbolMarketCurrenciesRequest) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *ListSymbolMarketCurrenciesRequest) GetPagination() *PaginationRequest {
-	if x != nil {
-		return x.Pagination
-	}
-	return nil
-}
-
-func (x *ListSymbolMarketCurrenciesRequest) GetOnlyActive() bool {
-	if x != nil {
-		return x.OnlyActive
-	}
-	return false
-}
-
-func (x *ListSymbolMarketCurrenciesRequest) GetSymbolGuid() string {
-	if x != nil {
-		return x.SymbolGuid
-	}
-	return ""
-}
-
-func (x *ListSymbolMarketCurrenciesRequest) GetCurrencyGuid() string {
-	if x != nil {
-		return x.CurrencyGuid
-	}
-	return ""
-}
-
-type ListSymbolMarketCurrenciesResponse struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	ReturnCode    uint64                      `protobuf:"varint,1,opt,name=return_code,json=returnCode,proto3" json:"return_code,omitempty"`
-	Message       string                      `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Pagination    *PaginationResponse         `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
-	Result        []*SymbolMarketCurrencyItem `protobuf:"bytes,4,rep,name=result,proto3" json:"result,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListSymbolMarketCurrenciesResponse) Reset() {
-	*x = ListSymbolMarketCurrenciesResponse{}
-	mi := &file_market_services_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListSymbolMarketCurrenciesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListSymbolMarketCurrenciesResponse) ProtoMessage() {}
-
-func (x *ListSymbolMarketCurrenciesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListSymbolMarketCurrenciesResponse.ProtoReflect.Descriptor instead.
-func (*ListSymbolMarketCurrenciesResponse) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *ListSymbolMarketCurrenciesResponse) GetReturnCode() uint64 {
-	if x != nil {
-		return x.ReturnCode
-	}
-	return 0
-}
-
-func (x *ListSymbolMarketCurrenciesResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *ListSymbolMarketCurrenciesResponse) GetPagination() *PaginationResponse {
-	if x != nil {
-		return x.Pagination
-	}
-	return nil
-}
-
-func (x *ListSymbolMarketCurrenciesResponse) GetResult() []*SymbolMarketCurrencyItem {
-	if x != nil {
-		return x.Result
-	}
-	return nil
-}
-
 type GetSymbolMarketCurrencyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SymbolGuid    string                 `protobuf:"bytes,1,opt,name=symbol_guid,json=symbolGuid,proto3" json:"symbol_guid,omitempty"`
@@ -1441,7 +1305,7 @@ type GetSymbolMarketCurrencyRequest struct {
 
 func (x *GetSymbolMarketCurrencyRequest) Reset() {
 	*x = GetSymbolMarketCurrencyRequest{}
-	mi := &file_market_services_proto_msgTypes[19]
+	mi := &file_market_services_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1453,7 +1317,7 @@ func (x *GetSymbolMarketCurrencyRequest) String() string {
 func (*GetSymbolMarketCurrencyRequest) ProtoMessage() {}
 
 func (x *GetSymbolMarketCurrencyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[19]
+	mi := &file_market_services_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1466,7 +1330,7 @@ func (x *GetSymbolMarketCurrencyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSymbolMarketCurrencyRequest.ProtoReflect.Descriptor instead.
 func (*GetSymbolMarketCurrencyRequest) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{19}
+	return file_market_services_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetSymbolMarketCurrencyRequest) GetSymbolGuid() string {
@@ -1494,7 +1358,7 @@ type GetSymbolMarketCurrencyResponse struct {
 
 func (x *GetSymbolMarketCurrencyResponse) Reset() {
 	*x = GetSymbolMarketCurrencyResponse{}
-	mi := &file_market_services_proto_msgTypes[20]
+	mi := &file_market_services_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1506,7 +1370,7 @@ func (x *GetSymbolMarketCurrencyResponse) String() string {
 func (*GetSymbolMarketCurrencyResponse) ProtoMessage() {}
 
 func (x *GetSymbolMarketCurrencyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[20]
+	mi := &file_market_services_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1519,7 +1383,7 @@ func (x *GetSymbolMarketCurrencyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSymbolMarketCurrencyResponse.ProtoReflect.Descriptor instead.
 func (*GetSymbolMarketCurrencyResponse) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{20}
+	return file_market_services_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetSymbolMarketCurrencyResponse) GetReturnCode() uint64 {
@@ -1563,7 +1427,7 @@ type SymbolKlineItem struct {
 
 func (x *SymbolKlineItem) Reset() {
 	*x = SymbolKlineItem{}
-	mi := &file_market_services_proto_msgTypes[21]
+	mi := &file_market_services_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1575,7 +1439,7 @@ func (x *SymbolKlineItem) String() string {
 func (*SymbolKlineItem) ProtoMessage() {}
 
 func (x *SymbolKlineItem) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[21]
+	mi := &file_market_services_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1588,7 +1452,7 @@ func (x *SymbolKlineItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SymbolKlineItem.ProtoReflect.Descriptor instead.
 func (*SymbolKlineItem) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{21}
+	return file_market_services_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SymbolKlineItem) GetGuid() string {
@@ -1689,7 +1553,7 @@ type ListKlinesRequest struct {
 
 func (x *ListKlinesRequest) Reset() {
 	*x = ListKlinesRequest{}
-	mi := &file_market_services_proto_msgTypes[22]
+	mi := &file_market_services_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1701,7 +1565,7 @@ func (x *ListKlinesRequest) String() string {
 func (*ListKlinesRequest) ProtoMessage() {}
 
 func (x *ListKlinesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[22]
+	mi := &file_market_services_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1714,7 +1578,7 @@ func (x *ListKlinesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKlinesRequest.ProtoReflect.Descriptor instead.
 func (*ListKlinesRequest) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{22}
+	return file_market_services_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListKlinesRequest) GetSymbolGuid() string {
@@ -1771,7 +1635,7 @@ type ListKlinesResponse struct {
 
 func (x *ListKlinesResponse) Reset() {
 	*x = ListKlinesResponse{}
-	mi := &file_market_services_proto_msgTypes[23]
+	mi := &file_market_services_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1783,7 +1647,7 @@ func (x *ListKlinesResponse) String() string {
 func (*ListKlinesResponse) ProtoMessage() {}
 
 func (x *ListKlinesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[23]
+	mi := &file_market_services_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1796,7 +1660,7 @@ func (x *ListKlinesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKlinesResponse.ProtoReflect.Descriptor instead.
 func (*ListKlinesResponse) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{23}
+	return file_market_services_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListKlinesResponse) GetReturnCode() uint64 {
@@ -1848,7 +1712,7 @@ type ExchangeSymbolKlineItem struct {
 
 func (x *ExchangeSymbolKlineItem) Reset() {
 	*x = ExchangeSymbolKlineItem{}
-	mi := &file_market_services_proto_msgTypes[24]
+	mi := &file_market_services_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1860,7 +1724,7 @@ func (x *ExchangeSymbolKlineItem) String() string {
 func (*ExchangeSymbolKlineItem) ProtoMessage() {}
 
 func (x *ExchangeSymbolKlineItem) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[24]
+	mi := &file_market_services_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1873,7 +1737,7 @@ func (x *ExchangeSymbolKlineItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExchangeSymbolKlineItem.ProtoReflect.Descriptor instead.
 func (*ExchangeSymbolKlineItem) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{24}
+	return file_market_services_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ExchangeSymbolKlineItem) GetGuid() string {
@@ -1982,7 +1846,7 @@ type ListExchangeKlinesRequest struct {
 
 func (x *ListExchangeKlinesRequest) Reset() {
 	*x = ListExchangeKlinesRequest{}
-	mi := &file_market_services_proto_msgTypes[25]
+	mi := &file_market_services_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1994,7 +1858,7 @@ func (x *ListExchangeKlinesRequest) String() string {
 func (*ListExchangeKlinesRequest) ProtoMessage() {}
 
 func (x *ListExchangeKlinesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[25]
+	mi := &file_market_services_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2007,7 +1871,7 @@ func (x *ListExchangeKlinesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExchangeKlinesRequest.ProtoReflect.Descriptor instead.
 func (*ListExchangeKlinesRequest) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{25}
+	return file_market_services_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListExchangeKlinesRequest) GetSymbolGuid() string {
@@ -2071,7 +1935,7 @@ type ListExchangeKlinesResponse struct {
 
 func (x *ListExchangeKlinesResponse) Reset() {
 	*x = ListExchangeKlinesResponse{}
-	mi := &file_market_services_proto_msgTypes[26]
+	mi := &file_market_services_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2083,7 +1947,7 @@ func (x *ListExchangeKlinesResponse) String() string {
 func (*ListExchangeKlinesResponse) ProtoMessage() {}
 
 func (x *ListExchangeKlinesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_market_services_proto_msgTypes[26]
+	mi := &file_market_services_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2096,7 +1960,7 @@ func (x *ListExchangeKlinesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExchangeKlinesResponse.ProtoReflect.Descriptor instead.
 func (*ListExchangeKlinesResponse) Descriptor() ([]byte, []int) {
-	return file_market_services_proto_rawDescGZIP(), []int{26}
+	return file_market_services_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListExchangeKlinesResponse) GetReturnCode() uint64 {
@@ -2266,24 +2130,7 @@ const file_market_services_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\b \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\x03R\tupdatedAt\"\xcf\x01\n" +
-	"!ListSymbolMarketCurrenciesRequest\x12C\n" +
-	"\n" +
-	"pagination\x18\x01 \x01(\v2#.xyz.MarketServer.PaginationRequestR\n" +
-	"pagination\x12\x1f\n" +
-	"\vonly_active\x18\x02 \x01(\bR\n" +
-	"onlyActive\x12\x1f\n" +
-	"\vsymbol_guid\x18\x03 \x01(\tR\n" +
-	"symbolGuid\x12#\n" +
-	"\rcurrency_guid\x18\x04 \x01(\tR\fcurrencyGuid\"\xe9\x01\n" +
-	"\"ListSymbolMarketCurrenciesResponse\x12\x1f\n" +
-	"\vreturn_code\x18\x01 \x01(\x04R\n" +
-	"returnCode\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12D\n" +
-	"\n" +
-	"pagination\x18\x03 \x01(\v2$.xyz.MarketServer.PaginationResponseR\n" +
-	"pagination\x12B\n" +
-	"\x06result\x18\x04 \x03(\v2*.xyz.MarketServer.SymbolMarketCurrencyItemR\x06result\"f\n" +
+	"updated_at\x18\t \x01(\x03R\tupdatedAt\"f\n" +
 	"\x1eGetSymbolMarketCurrencyRequest\x12\x1f\n" +
 	"\vsymbol_guid\x18\x01 \x01(\tR\n" +
 	"symbolGuid\x12#\n" +
@@ -2383,10 +2230,9 @@ const file_market_services_proto_rawDesc = "" +
 	"\x13MarketSymbolService\x12n\n" +
 	"\x11listMarketSymbols\x12*.xyz.MarketServer.ListMarketSymbolsRequest\x1a+.xyz.MarketServer.ListMarketSymbolsResponse\"\x00\x12n\n" +
 	"\x11listSymbolMarkets\x12*.xyz.MarketServer.ListSymbolMarketsRequest\x1a+.xyz.MarketServer.ListSymbolMarketsResponse\"\x00\x12h\n" +
-	"\x0fgetSymbolMarket\x12(.xyz.MarketServer.GetSymbolMarketRequest\x1a).xyz.MarketServer.GetSymbolMarketResponse\"\x002\x8b\x03\n" +
+	"\x0fgetSymbolMarket\x12(.xyz.MarketServer.GetSymbolMarketRequest\x1a).xyz.MarketServer.GetSymbolMarketResponse\"\x002\xff\x01\n" +
 	"\x13FiatCurrencyService\x12e\n" +
-	"\x0elistCurrencies\x12'.xyz.MarketServer.ListCurrenciesRequest\x1a(.xyz.MarketServer.ListCurrenciesResponse\"\x00\x12\x89\x01\n" +
-	"\x1alistSymbolMarketCurrencies\x123.xyz.MarketServer.ListSymbolMarketCurrenciesRequest\x1a4.xyz.MarketServer.ListSymbolMarketCurrenciesResponse\"\x00\x12\x80\x01\n" +
+	"\x0elistCurrencies\x12'.xyz.MarketServer.ListCurrenciesRequest\x1a(.xyz.MarketServer.ListCurrenciesResponse\"\x00\x12\x80\x01\n" +
 	"\x17getSymbolMarketCurrency\x120.xyz.MarketServer.GetSymbolMarketCurrencyRequest\x1a1.xyz.MarketServer.GetSymbolMarketCurrencyResponse\"\x002\xdc\x01\n" +
 	"\fKlineService\x12Y\n" +
 	"\n" +
@@ -2407,36 +2253,34 @@ func file_market_services_proto_rawDescGZIP() []byte {
 }
 
 var file_market_services_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_market_services_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_market_services_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_market_services_proto_goTypes = []any{
-	(KlineTimeframe)(0),                        // 0: xyz.MarketServer.KlineTimeframe
-	(*PaginationRequest)(nil),                  // 1: xyz.MarketServer.PaginationRequest
-	(*PaginationResponse)(nil),                 // 2: xyz.MarketServer.PaginationResponse
-	(*AssetItem)(nil),                          // 3: xyz.MarketServer.AssetItem
-	(*SupportAssetRequest)(nil),                // 4: xyz.MarketServer.SupportAssetRequest
-	(*SupportAssetResponse)(nil),               // 5: xyz.MarketServer.SupportAssetResponse
-	(*MarketSymbolItem)(nil),                   // 6: xyz.MarketServer.MarketSymbolItem
-	(*ListMarketSymbolsRequest)(nil),           // 7: xyz.MarketServer.ListMarketSymbolsRequest
-	(*ListMarketSymbolsResponse)(nil),          // 8: xyz.MarketServer.ListMarketSymbolsResponse
-	(*SymbolMarketItem)(nil),                   // 9: xyz.MarketServer.SymbolMarketItem
-	(*ListSymbolMarketsRequest)(nil),           // 10: xyz.MarketServer.ListSymbolMarketsRequest
-	(*ListSymbolMarketsResponse)(nil),          // 11: xyz.MarketServer.ListSymbolMarketsResponse
-	(*GetSymbolMarketRequest)(nil),             // 12: xyz.MarketServer.GetSymbolMarketRequest
-	(*GetSymbolMarketResponse)(nil),            // 13: xyz.MarketServer.GetSymbolMarketResponse
-	(*CurrencyItem)(nil),                       // 14: xyz.MarketServer.CurrencyItem
-	(*ListCurrenciesRequest)(nil),              // 15: xyz.MarketServer.ListCurrenciesRequest
-	(*ListCurrenciesResponse)(nil),             // 16: xyz.MarketServer.ListCurrenciesResponse
-	(*SymbolMarketCurrencyItem)(nil),           // 17: xyz.MarketServer.SymbolMarketCurrencyItem
-	(*ListSymbolMarketCurrenciesRequest)(nil),  // 18: xyz.MarketServer.ListSymbolMarketCurrenciesRequest
-	(*ListSymbolMarketCurrenciesResponse)(nil), // 19: xyz.MarketServer.ListSymbolMarketCurrenciesResponse
-	(*GetSymbolMarketCurrencyRequest)(nil),     // 20: xyz.MarketServer.GetSymbolMarketCurrencyRequest
-	(*GetSymbolMarketCurrencyResponse)(nil),    // 21: xyz.MarketServer.GetSymbolMarketCurrencyResponse
-	(*SymbolKlineItem)(nil),                    // 22: xyz.MarketServer.SymbolKlineItem
-	(*ListKlinesRequest)(nil),                  // 23: xyz.MarketServer.ListKlinesRequest
-	(*ListKlinesResponse)(nil),                 // 24: xyz.MarketServer.ListKlinesResponse
-	(*ExchangeSymbolKlineItem)(nil),            // 25: xyz.MarketServer.ExchangeSymbolKlineItem
-	(*ListExchangeKlinesRequest)(nil),          // 26: xyz.MarketServer.ListExchangeKlinesRequest
-	(*ListExchangeKlinesResponse)(nil),         // 27: xyz.MarketServer.ListExchangeKlinesResponse
+	(KlineTimeframe)(0),                     // 0: xyz.MarketServer.KlineTimeframe
+	(*PaginationRequest)(nil),               // 1: xyz.MarketServer.PaginationRequest
+	(*PaginationResponse)(nil),              // 2: xyz.MarketServer.PaginationResponse
+	(*AssetItem)(nil),                       // 3: xyz.MarketServer.AssetItem
+	(*SupportAssetRequest)(nil),             // 4: xyz.MarketServer.SupportAssetRequest
+	(*SupportAssetResponse)(nil),            // 5: xyz.MarketServer.SupportAssetResponse
+	(*MarketSymbolItem)(nil),                // 6: xyz.MarketServer.MarketSymbolItem
+	(*ListMarketSymbolsRequest)(nil),        // 7: xyz.MarketServer.ListMarketSymbolsRequest
+	(*ListMarketSymbolsResponse)(nil),       // 8: xyz.MarketServer.ListMarketSymbolsResponse
+	(*SymbolMarketItem)(nil),                // 9: xyz.MarketServer.SymbolMarketItem
+	(*ListSymbolMarketsRequest)(nil),        // 10: xyz.MarketServer.ListSymbolMarketsRequest
+	(*ListSymbolMarketsResponse)(nil),       // 11: xyz.MarketServer.ListSymbolMarketsResponse
+	(*GetSymbolMarketRequest)(nil),          // 12: xyz.MarketServer.GetSymbolMarketRequest
+	(*GetSymbolMarketResponse)(nil),         // 13: xyz.MarketServer.GetSymbolMarketResponse
+	(*CurrencyItem)(nil),                    // 14: xyz.MarketServer.CurrencyItem
+	(*ListCurrenciesRequest)(nil),           // 15: xyz.MarketServer.ListCurrenciesRequest
+	(*ListCurrenciesResponse)(nil),          // 16: xyz.MarketServer.ListCurrenciesResponse
+	(*SymbolMarketCurrencyItem)(nil),        // 17: xyz.MarketServer.SymbolMarketCurrencyItem
+	(*GetSymbolMarketCurrencyRequest)(nil),  // 18: xyz.MarketServer.GetSymbolMarketCurrencyRequest
+	(*GetSymbolMarketCurrencyResponse)(nil), // 19: xyz.MarketServer.GetSymbolMarketCurrencyResponse
+	(*SymbolKlineItem)(nil),                 // 20: xyz.MarketServer.SymbolKlineItem
+	(*ListKlinesRequest)(nil),               // 21: xyz.MarketServer.ListKlinesRequest
+	(*ListKlinesResponse)(nil),              // 22: xyz.MarketServer.ListKlinesResponse
+	(*ExchangeSymbolKlineItem)(nil),         // 23: xyz.MarketServer.ExchangeSymbolKlineItem
+	(*ListExchangeKlinesRequest)(nil),       // 24: xyz.MarketServer.ListExchangeKlinesRequest
+	(*ListExchangeKlinesResponse)(nil),      // 25: xyz.MarketServer.ListExchangeKlinesResponse
 }
 var file_market_services_proto_depIdxs = []int32{
 	3,  // 0: xyz.MarketServer.SupportAssetResponse.asset:type_name -> xyz.MarketServer.AssetItem
@@ -2450,43 +2294,38 @@ var file_market_services_proto_depIdxs = []int32{
 	1,  // 8: xyz.MarketServer.ListCurrenciesRequest.pagination:type_name -> xyz.MarketServer.PaginationRequest
 	2,  // 9: xyz.MarketServer.ListCurrenciesResponse.pagination:type_name -> xyz.MarketServer.PaginationResponse
 	14, // 10: xyz.MarketServer.ListCurrenciesResponse.result:type_name -> xyz.MarketServer.CurrencyItem
-	1,  // 11: xyz.MarketServer.ListSymbolMarketCurrenciesRequest.pagination:type_name -> xyz.MarketServer.PaginationRequest
-	2,  // 12: xyz.MarketServer.ListSymbolMarketCurrenciesResponse.pagination:type_name -> xyz.MarketServer.PaginationResponse
-	17, // 13: xyz.MarketServer.ListSymbolMarketCurrenciesResponse.result:type_name -> xyz.MarketServer.SymbolMarketCurrencyItem
-	17, // 14: xyz.MarketServer.GetSymbolMarketCurrencyResponse.result:type_name -> xyz.MarketServer.SymbolMarketCurrencyItem
-	0,  // 15: xyz.MarketServer.SymbolKlineItem.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
-	0,  // 16: xyz.MarketServer.ListKlinesRequest.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
-	1,  // 17: xyz.MarketServer.ListKlinesRequest.pagination:type_name -> xyz.MarketServer.PaginationRequest
-	2,  // 18: xyz.MarketServer.ListKlinesResponse.pagination:type_name -> xyz.MarketServer.PaginationResponse
-	22, // 19: xyz.MarketServer.ListKlinesResponse.result:type_name -> xyz.MarketServer.SymbolKlineItem
-	0,  // 20: xyz.MarketServer.ExchangeSymbolKlineItem.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
-	0,  // 21: xyz.MarketServer.ListExchangeKlinesRequest.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
-	1,  // 22: xyz.MarketServer.ListExchangeKlinesRequest.pagination:type_name -> xyz.MarketServer.PaginationRequest
-	2,  // 23: xyz.MarketServer.ListExchangeKlinesResponse.pagination:type_name -> xyz.MarketServer.PaginationResponse
-	25, // 24: xyz.MarketServer.ListExchangeKlinesResponse.result:type_name -> xyz.MarketServer.ExchangeSymbolKlineItem
-	4,  // 25: xyz.MarketServer.MarketServices.getSupportAsset:input_type -> xyz.MarketServer.SupportAssetRequest
-	7,  // 26: xyz.MarketServer.MarketSymbolService.listMarketSymbols:input_type -> xyz.MarketServer.ListMarketSymbolsRequest
-	10, // 27: xyz.MarketServer.MarketSymbolService.listSymbolMarkets:input_type -> xyz.MarketServer.ListSymbolMarketsRequest
-	12, // 28: xyz.MarketServer.MarketSymbolService.getSymbolMarket:input_type -> xyz.MarketServer.GetSymbolMarketRequest
-	15, // 29: xyz.MarketServer.FiatCurrencyService.listCurrencies:input_type -> xyz.MarketServer.ListCurrenciesRequest
-	18, // 30: xyz.MarketServer.FiatCurrencyService.listSymbolMarketCurrencies:input_type -> xyz.MarketServer.ListSymbolMarketCurrenciesRequest
-	20, // 31: xyz.MarketServer.FiatCurrencyService.getSymbolMarketCurrency:input_type -> xyz.MarketServer.GetSymbolMarketCurrencyRequest
-	23, // 32: xyz.MarketServer.KlineService.listKlines:input_type -> xyz.MarketServer.ListKlinesRequest
-	26, // 33: xyz.MarketServer.KlineService.listExchangeKlines:input_type -> xyz.MarketServer.ListExchangeKlinesRequest
-	5,  // 34: xyz.MarketServer.MarketServices.getSupportAsset:output_type -> xyz.MarketServer.SupportAssetResponse
-	8,  // 35: xyz.MarketServer.MarketSymbolService.listMarketSymbols:output_type -> xyz.MarketServer.ListMarketSymbolsResponse
-	11, // 36: xyz.MarketServer.MarketSymbolService.listSymbolMarkets:output_type -> xyz.MarketServer.ListSymbolMarketsResponse
-	13, // 37: xyz.MarketServer.MarketSymbolService.getSymbolMarket:output_type -> xyz.MarketServer.GetSymbolMarketResponse
-	16, // 38: xyz.MarketServer.FiatCurrencyService.listCurrencies:output_type -> xyz.MarketServer.ListCurrenciesResponse
-	19, // 39: xyz.MarketServer.FiatCurrencyService.listSymbolMarketCurrencies:output_type -> xyz.MarketServer.ListSymbolMarketCurrenciesResponse
-	21, // 40: xyz.MarketServer.FiatCurrencyService.getSymbolMarketCurrency:output_type -> xyz.MarketServer.GetSymbolMarketCurrencyResponse
-	24, // 41: xyz.MarketServer.KlineService.listKlines:output_type -> xyz.MarketServer.ListKlinesResponse
-	27, // 42: xyz.MarketServer.KlineService.listExchangeKlines:output_type -> xyz.MarketServer.ListExchangeKlinesResponse
-	34, // [34:43] is the sub-list for method output_type
-	25, // [25:34] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	17, // 11: xyz.MarketServer.GetSymbolMarketCurrencyResponse.result:type_name -> xyz.MarketServer.SymbolMarketCurrencyItem
+	0,  // 12: xyz.MarketServer.SymbolKlineItem.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
+	0,  // 13: xyz.MarketServer.ListKlinesRequest.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
+	1,  // 14: xyz.MarketServer.ListKlinesRequest.pagination:type_name -> xyz.MarketServer.PaginationRequest
+	2,  // 15: xyz.MarketServer.ListKlinesResponse.pagination:type_name -> xyz.MarketServer.PaginationResponse
+	20, // 16: xyz.MarketServer.ListKlinesResponse.result:type_name -> xyz.MarketServer.SymbolKlineItem
+	0,  // 17: xyz.MarketServer.ExchangeSymbolKlineItem.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
+	0,  // 18: xyz.MarketServer.ListExchangeKlinesRequest.timeframe:type_name -> xyz.MarketServer.KlineTimeframe
+	1,  // 19: xyz.MarketServer.ListExchangeKlinesRequest.pagination:type_name -> xyz.MarketServer.PaginationRequest
+	2,  // 20: xyz.MarketServer.ListExchangeKlinesResponse.pagination:type_name -> xyz.MarketServer.PaginationResponse
+	23, // 21: xyz.MarketServer.ListExchangeKlinesResponse.result:type_name -> xyz.MarketServer.ExchangeSymbolKlineItem
+	4,  // 22: xyz.MarketServer.MarketServices.getSupportAsset:input_type -> xyz.MarketServer.SupportAssetRequest
+	7,  // 23: xyz.MarketServer.MarketSymbolService.listMarketSymbols:input_type -> xyz.MarketServer.ListMarketSymbolsRequest
+	10, // 24: xyz.MarketServer.MarketSymbolService.listSymbolMarkets:input_type -> xyz.MarketServer.ListSymbolMarketsRequest
+	12, // 25: xyz.MarketServer.MarketSymbolService.getSymbolMarket:input_type -> xyz.MarketServer.GetSymbolMarketRequest
+	15, // 26: xyz.MarketServer.FiatCurrencyService.listCurrencies:input_type -> xyz.MarketServer.ListCurrenciesRequest
+	18, // 27: xyz.MarketServer.FiatCurrencyService.getSymbolMarketCurrency:input_type -> xyz.MarketServer.GetSymbolMarketCurrencyRequest
+	21, // 28: xyz.MarketServer.KlineService.listKlines:input_type -> xyz.MarketServer.ListKlinesRequest
+	24, // 29: xyz.MarketServer.KlineService.listExchangeKlines:input_type -> xyz.MarketServer.ListExchangeKlinesRequest
+	5,  // 30: xyz.MarketServer.MarketServices.getSupportAsset:output_type -> xyz.MarketServer.SupportAssetResponse
+	8,  // 31: xyz.MarketServer.MarketSymbolService.listMarketSymbols:output_type -> xyz.MarketServer.ListMarketSymbolsResponse
+	11, // 32: xyz.MarketServer.MarketSymbolService.listSymbolMarkets:output_type -> xyz.MarketServer.ListSymbolMarketsResponse
+	13, // 33: xyz.MarketServer.MarketSymbolService.getSymbolMarket:output_type -> xyz.MarketServer.GetSymbolMarketResponse
+	16, // 34: xyz.MarketServer.FiatCurrencyService.listCurrencies:output_type -> xyz.MarketServer.ListCurrenciesResponse
+	19, // 35: xyz.MarketServer.FiatCurrencyService.getSymbolMarketCurrency:output_type -> xyz.MarketServer.GetSymbolMarketCurrencyResponse
+	22, // 36: xyz.MarketServer.KlineService.listKlines:output_type -> xyz.MarketServer.ListKlinesResponse
+	25, // 37: xyz.MarketServer.KlineService.listExchangeKlines:output_type -> xyz.MarketServer.ListExchangeKlinesResponse
+	30, // [30:38] is the sub-list for method output_type
+	22, // [22:30] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_market_services_proto_init() }
@@ -2500,7 +2339,7 @@ func file_market_services_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_market_services_proto_rawDesc), len(file_market_services_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   27,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   4,
 		},

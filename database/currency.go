@@ -25,6 +25,7 @@ func (Currency) TableName() string {
 
 type CurrencyView interface {
 	QueryCurrencyList(page, pageSize int64) ([]*Currency, int64, error)
+	QueryCurrencyListByFilter(page, pageSize int64, onlyActive bool, currencyCode string) ([]*Currency, int64, error)
 	QueryActiveCurrency() ([]*Currency, error)
 }
 
@@ -44,6 +45,10 @@ func NewCurrencyDB(db *gorm.DB) CurrencyDB {
 }
 
 func (c *currencyDB) QueryCurrencyList(page, pageSize int64) ([]*Currency, int64, error) {
+	return c.QueryCurrencyListByFilter(page, pageSize, false, "")
+}
+
+func (c *currencyDB) QueryCurrencyListByFilter(page, pageSize int64, onlyActive bool, currencyCode string) ([]*Currency, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -55,6 +60,12 @@ func (c *currencyDB) QueryCurrencyList(page, pageSize int64) ([]*Currency, int64
 
 	var list []*Currency
 	query := c.gorm.Model(&Currency{})
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if currencyCode != "" {
+		query = query.Where("currency_code = ?", currencyCode)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {

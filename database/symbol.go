@@ -24,6 +24,7 @@ func (Symbol) TableName() string {
 
 type SymbolView interface {
 	QuerySymbolList(page, pageSize int64) ([]*Symbol, int64, error)
+	QuerySymbolListByFilter(page, pageSize int64, onlyActive bool, baseAssetGuid, quoteAssetGuid, marketType string) ([]*Symbol, int64, error)
 	QuerySymbols() ([]*Symbol, error)
 	QuerySymbolByGuid(symbolGuid string) (*Symbol, error)
 }
@@ -44,6 +45,10 @@ func NewSymbolDB(db *gorm.DB) SymbolDB {
 }
 
 func (s *symbolDB) QuerySymbolList(page, pageSize int64) ([]*Symbol, int64, error) {
+	return s.QuerySymbolListByFilter(page, pageSize, false, "", "", "")
+}
+
+func (s *symbolDB) QuerySymbolListByFilter(page, pageSize int64, onlyActive bool, baseAssetGuid, quoteAssetGuid, marketType string) ([]*Symbol, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -55,6 +60,18 @@ func (s *symbolDB) QuerySymbolList(page, pageSize int64) ([]*Symbol, int64, erro
 
 	var list []*Symbol
 	query := s.gorm.Model(&Symbol{})
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if baseAssetGuid != "" {
+		query = query.Where("base_asset_guid = ?", baseAssetGuid)
+	}
+	if quoteAssetGuid != "" {
+		query = query.Where("qoute_asset_guid = ?", quoteAssetGuid)
+	}
+	if marketType != "" {
+		query = query.Where("market_type = ?", marketType)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {

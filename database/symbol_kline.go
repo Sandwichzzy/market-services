@@ -28,6 +28,7 @@ func (SymbolKline) TableName() string {
 
 type SymbolKlineView interface {
 	QuerySymbolKlineList(page, pageSize int64) ([]*SymbolKline, int64, error)
+	QuerySymbolKlineListByFilter(page, pageSize int64, symbolGuid string, onlyActive bool, startAt, endAt *time.Time) ([]*SymbolKline, int64, error)
 }
 
 type SymbolKlineDB interface {
@@ -47,6 +48,10 @@ func NewSymbolKlineDB(db *gorm.DB) SymbolKlineDB {
 }
 
 func (s *symbolKlineDB) QuerySymbolKlineList(page, pageSize int64) ([]*SymbolKline, int64, error) {
+	return s.QuerySymbolKlineListByFilter(page, pageSize, "", false, nil, nil)
+}
+
+func (s *symbolKlineDB) QuerySymbolKlineListByFilter(page, pageSize int64, symbolGuid string, onlyActive bool, startAt, endAt *time.Time) ([]*SymbolKline, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -58,6 +63,18 @@ func (s *symbolKlineDB) QuerySymbolKlineList(page, pageSize int64) ([]*SymbolKli
 
 	var list []*SymbolKline
 	query := s.gorm.Model(&SymbolKline{})
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if symbolGuid != "" {
+		query = query.Where("symbol_guid = ?", symbolGuid)
+	}
+	if startAt != nil {
+		query = query.Where("created_at >= ?", *startAt)
+	}
+	if endAt != nil {
+		query = query.Where("created_at <= ?", *endAt)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -65,7 +82,7 @@ func (s *symbolKlineDB) QuerySymbolKlineList(page, pageSize int64) ([]*SymbolKli
 		return nil, 0, err
 	}
 
-	if err := query.Order("created_at DESC").
+	if err := query.Order("created_at ASC").
 		Limit(int(pageSize)).
 		Offset(int(offset)).
 		Find(&list).Error; err != nil {

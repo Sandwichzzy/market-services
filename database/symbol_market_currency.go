@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
@@ -26,6 +27,8 @@ func (SymbolMarketCurrency) TableName() string {
 
 type SymbolMarketCurrencyView interface {
 	QuerySymbolMarketCurrencyList(page, pageSize int64) ([]*SymbolMarketCurrency, int64, error)
+	QuerySymbolMarketCurrencyListByFilter(page, pageSize int64, symbolGuid, currencyGuid string, onlyActive bool) ([]*SymbolMarketCurrency, int64, error)
+	QuerySymbolMarketCurrency(symbolGuid, currencyGuid string, onlyActive bool) (*SymbolMarketCurrency, error)
 }
 
 type SymbolMarketCurrencyDB interface {
@@ -47,6 +50,11 @@ func NewSymbolMarketCurrencyDB(db *gorm.DB) SymbolMarketCurrencyDB {
 
 // QuerySymbolMarketCurrencyList 按分页查询法币行情快照列表，并返回总数。
 func (s *symbolMarketCurrencyDB) QuerySymbolMarketCurrencyList(page, pageSize int64) ([]*SymbolMarketCurrency, int64, error) {
+	return s.QuerySymbolMarketCurrencyListByFilter(page, pageSize, "", "", false)
+}
+
+// QuerySymbolMarketCurrencyListByFilter 按筛选条件分页查询法币行情快照列表，并返回总数。
+func (s *symbolMarketCurrencyDB) QuerySymbolMarketCurrencyListByFilter(page, pageSize int64, symbolGuid, currencyGuid string, onlyActive bool) ([]*SymbolMarketCurrency, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -58,6 +66,15 @@ func (s *symbolMarketCurrencyDB) QuerySymbolMarketCurrencyList(page, pageSize in
 
 	var list []*SymbolMarketCurrency
 	query := s.gorm.Model(&SymbolMarketCurrency{})
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if symbolGuid != "" {
+		query = query.Where("symbol_guid = ?", symbolGuid)
+	}
+	if currencyGuid != "" {
+		query = query.Where("currency_guid = ?", currencyGuid)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -74,6 +91,27 @@ func (s *symbolMarketCurrencyDB) QuerySymbolMarketCurrencyList(page, pageSize in
 	}
 
 	return list, total, nil
+}
+
+// QuerySymbolMarketCurrency 查询指定交易对在指定法币下的最新行情快照。
+func (s *symbolMarketCurrencyDB) QuerySymbolMarketCurrency(symbolGuid, currencyGuid string, onlyActive bool) (*SymbolMarketCurrency, error) {
+	var item SymbolMarketCurrency
+	query := s.gorm.Model(&SymbolMarketCurrency{}).
+		Where("symbol_guid = ? AND currency_guid = ?", symbolGuid, currencyGuid)
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if err := query.Order("updated_at DESC").
+		Order("created_at DESC").
+		Order("guid DESC").
+		First(&item).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		log.Error("Failed to query symbol_market_currency", "symbol_guid", symbolGuid, "currency_guid", currencyGuid, "error", err)
+		return nil, err
+	}
+	return &item, nil
 }
 
 // StoreSymbolMarketCurrencies 批量写入法币行情记录。

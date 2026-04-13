@@ -137,20 +137,6 @@ message SymbolMarketCurrencyItem {
   int64 updated_at = 9;
 }
 
-message ListSymbolMarketCurrenciesRequest {
-  PaginationRequest pagination = 1;
-  bool only_active = 2;
-  string symbol_guid = 3;
-  string currency_guid = 4;
-}
-
-message ListSymbolMarketCurrenciesResponse {
-  uint64 return_code = 1;
-  string message = 2;
-  PaginationResponse pagination = 3;
-  repeated SymbolMarketCurrencyItem result = 4;
-}
-
 message GetSymbolMarketCurrencyRequest {
   string symbol_guid = 1;
   string currency_guid = 2;
@@ -243,8 +229,6 @@ service MarketSymbolService {
 
 service FiatCurrencyService {
   rpc listCurrencies(ListCurrenciesRequest) returns (ListCurrenciesResponse) {} //查询法币汇率配置列表，支持 only_active
-  //查询交易对按法币换算后的行情，支持按symbol_guid、currency_guid 过滤
-  rpc listSymbolMarketCurrencies(ListSymbolMarketCurrenciesRequest) returns (ListSymbolMarketCurrenciesResponse) {}
   //查询单个交易对在指定法币下的最新行情
   rpc getSymbolMarketCurrency(GetSymbolMarketCurrencyRequest) returns (GetSymbolMarketCurrencyResponse) {}
 }

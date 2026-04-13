@@ -28,6 +28,8 @@ func (SymbolMarket) TableName() string {
 
 type SymbolMarketView interface {
 	QuerySymbolMarketList(page, pageSize int64) ([]*SymbolMarket, int64, error)
+	QuerySymbolMarketListByFilter(page, pageSize int64, symbolGuid string, onlyActive bool) ([]*SymbolMarket, int64, error)
+	QueryLatestSymbolMarketBySymbol(symbolGuid string, onlyActive bool) (*SymbolMarket, error)
 	QuerySymbolMarketTodayFirstDataBySymbol(symbolGuid string) (*SymbolMarket, error)
 }
 
@@ -47,6 +49,10 @@ func NewSymbolMarketDB(db *gorm.DB) SymbolMarketDB {
 }
 
 func (s *symbolMarketDB) QuerySymbolMarketList(page, pageSize int64) ([]*SymbolMarket, int64, error) {
+	return s.QuerySymbolMarketListByFilter(page, pageSize, "", false)
+}
+
+func (s *symbolMarketDB) QuerySymbolMarketListByFilter(page, pageSize int64, symbolGuid string, onlyActive bool) ([]*SymbolMarket, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -58,6 +64,12 @@ func (s *symbolMarketDB) QuerySymbolMarketList(page, pageSize int64) ([]*SymbolM
 
 	var list []*SymbolMarket
 	query := s.gorm.Model(&SymbolMarket{})
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if symbolGuid != "" {
+		query = query.Where("symbol_guid = ?", symbolGuid)
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -74,6 +86,25 @@ func (s *symbolMarketDB) QuerySymbolMarketList(page, pageSize int64) ([]*SymbolM
 	}
 
 	return list, total, nil
+}
+
+func (s *symbolMarketDB) QueryLatestSymbolMarketBySymbol(symbolGuid string, onlyActive bool) (*SymbolMarket, error) {
+	var symbolMarket SymbolMarket
+	query := s.gorm.Model(&SymbolMarket{}).Where("symbol_guid = ?", symbolGuid)
+	if onlyActive {
+		query = query.Where("is_active = ?", true)
+	}
+	if err := query.Order("updated_at DESC").
+		Order("created_at DESC").
+		Order("guid DESC").
+		First(&symbolMarket).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		log.Error("QueryLatestSymbolMarketBySymbol error", "symbol_guid", symbolGuid, "error", err)
+		return nil, err
+	}
+	return &symbolMarket, nil
 }
 
 // QuerySymbolMarketTodayFirstDataBySymbol 查询指定交易对当日最早的一条行情快照。

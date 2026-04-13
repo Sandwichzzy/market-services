@@ -24,8 +24,11 @@ type MarketRpcService struct {
 	*MarketRpcConfig //匿名字段 嵌入字段（提升）
 	db               *database.DB
 
-	proto.UnimplementedMarketServicesServer //匿名字段 嵌入字段
-	stopped                                 atomic.Bool
+	proto.UnimplementedMarketServicesServer
+	proto.UnimplementedMarketSymbolServiceServer
+	proto.UnimplementedFiatCurrencyServiceServer
+	proto.UnimplementedKlineServiceServer
+	stopped atomic.Bool
 }
 
 func NewMarketRpcService(conf *MarketRpcConfig, db *database.DB) (*MarketRpcService, error) {
@@ -53,6 +56,9 @@ func (ms *MarketRpcService) Start(ctx context.Context) error {
 		// 将当前服务实现注册到 gRPC 服务器
 		// proto.MarketServicesServer 接口由嵌入的 UnimplementedMarketServicesServer 自动满足
 		proto.RegisterMarketServicesServer(gs, ms)
+		proto.RegisterMarketSymbolServiceServer(gs, ms)
+		proto.RegisterFiatCurrencyServiceServer(gs, ms)
+		proto.RegisterKlineServiceServer(gs, ms)
 		log.Info("grpc info", "addr", listener.Addr())
 
 		// 启动服务并阻塞，直到 Serve 返回

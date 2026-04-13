@@ -295,9 +295,8 @@ var MarketSymbolService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	FiatCurrencyService_ListCurrencies_FullMethodName             = "/xyz.MarketServer.FiatCurrencyService/listCurrencies"
-	FiatCurrencyService_ListSymbolMarketCurrencies_FullMethodName = "/xyz.MarketServer.FiatCurrencyService/listSymbolMarketCurrencies"
-	FiatCurrencyService_GetSymbolMarketCurrency_FullMethodName    = "/xyz.MarketServer.FiatCurrencyService/getSymbolMarketCurrency"
+	FiatCurrencyService_ListCurrencies_FullMethodName          = "/xyz.MarketServer.FiatCurrencyService/listCurrencies"
+	FiatCurrencyService_GetSymbolMarketCurrency_FullMethodName = "/xyz.MarketServer.FiatCurrencyService/getSymbolMarketCurrency"
 )
 
 // FiatCurrencyServiceClient is the client API for FiatCurrencyService service.
@@ -305,8 +304,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FiatCurrencyServiceClient interface {
 	ListCurrencies(ctx context.Context, in *ListCurrenciesRequest, opts ...grpc.CallOption) (*ListCurrenciesResponse, error)
-	// 查询交易对按法币换算后的行情，支持按symbol_guid、currency_guid 过滤
-	ListSymbolMarketCurrencies(ctx context.Context, in *ListSymbolMarketCurrenciesRequest, opts ...grpc.CallOption) (*ListSymbolMarketCurrenciesResponse, error)
 	// 查询单个交易对在指定法币下的最新行情
 	GetSymbolMarketCurrency(ctx context.Context, in *GetSymbolMarketCurrencyRequest, opts ...grpc.CallOption) (*GetSymbolMarketCurrencyResponse, error)
 }
@@ -329,16 +326,6 @@ func (c *fiatCurrencyServiceClient) ListCurrencies(ctx context.Context, in *List
 	return out, nil
 }
 
-func (c *fiatCurrencyServiceClient) ListSymbolMarketCurrencies(ctx context.Context, in *ListSymbolMarketCurrenciesRequest, opts ...grpc.CallOption) (*ListSymbolMarketCurrenciesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListSymbolMarketCurrenciesResponse)
-	err := c.cc.Invoke(ctx, FiatCurrencyService_ListSymbolMarketCurrencies_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *fiatCurrencyServiceClient) GetSymbolMarketCurrency(ctx context.Context, in *GetSymbolMarketCurrencyRequest, opts ...grpc.CallOption) (*GetSymbolMarketCurrencyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetSymbolMarketCurrencyResponse)
@@ -354,8 +341,6 @@ func (c *fiatCurrencyServiceClient) GetSymbolMarketCurrency(ctx context.Context,
 // for forward compatibility.
 type FiatCurrencyServiceServer interface {
 	ListCurrencies(context.Context, *ListCurrenciesRequest) (*ListCurrenciesResponse, error)
-	// 查询交易对按法币换算后的行情，支持按symbol_guid、currency_guid 过滤
-	ListSymbolMarketCurrencies(context.Context, *ListSymbolMarketCurrenciesRequest) (*ListSymbolMarketCurrenciesResponse, error)
 	// 查询单个交易对在指定法币下的最新行情
 	GetSymbolMarketCurrency(context.Context, *GetSymbolMarketCurrencyRequest) (*GetSymbolMarketCurrencyResponse, error)
 }
@@ -369,9 +354,6 @@ type UnimplementedFiatCurrencyServiceServer struct{}
 
 func (UnimplementedFiatCurrencyServiceServer) ListCurrencies(context.Context, *ListCurrenciesRequest) (*ListCurrenciesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListCurrencies not implemented")
-}
-func (UnimplementedFiatCurrencyServiceServer) ListSymbolMarketCurrencies(context.Context, *ListSymbolMarketCurrenciesRequest) (*ListSymbolMarketCurrenciesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListSymbolMarketCurrencies not implemented")
 }
 func (UnimplementedFiatCurrencyServiceServer) GetSymbolMarketCurrency(context.Context, *GetSymbolMarketCurrencyRequest) (*GetSymbolMarketCurrencyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSymbolMarketCurrency not implemented")
@@ -414,24 +396,6 @@ func _FiatCurrencyService_ListCurrencies_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FiatCurrencyService_ListSymbolMarketCurrencies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListSymbolMarketCurrenciesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FiatCurrencyServiceServer).ListSymbolMarketCurrencies(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FiatCurrencyService_ListSymbolMarketCurrencies_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FiatCurrencyServiceServer).ListSymbolMarketCurrencies(ctx, req.(*ListSymbolMarketCurrenciesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _FiatCurrencyService_GetSymbolMarketCurrency_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSymbolMarketCurrencyRequest)
 	if err := dec(in); err != nil {
@@ -460,10 +424,6 @@ var FiatCurrencyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "listCurrencies",
 			Handler:    _FiatCurrencyService_ListCurrencies_Handler,
-		},
-		{
-			MethodName: "listSymbolMarketCurrencies",
-			Handler:    _FiatCurrencyService_ListSymbolMarketCurrencies_Handler,
 		},
 		{
 			MethodName: "getSymbolMarketCurrency",
