@@ -85,7 +85,7 @@ func (a *API) initFromConfig(ctx context.Context, cfg *config.Config) error {
 	if err := a.initDB(ctx, cfg); err != nil {
 		return fmt.Errorf("failed to init DB: %w", err)
 	}
-	a.initRouter(cfg.RestServer, cfg)
+	a.initRouter()
 	if err := a.startServer(cfg.RestServer); err != nil {
 		return fmt.Errorf("failed to start API server: %w", err)
 	}
@@ -102,7 +102,7 @@ func (a *API) initDB(ctx context.Context, cfg *config.Config) error {
 	return nil
 }
 
-func (a *API) initRouter(conf config.ServerConfig, cfg *config.Config) {
+func (a *API) initRouter() {
 
 	// 创建服务层实例
 	svc := service.NewHandleSvc(
@@ -153,12 +153,6 @@ func (a *API) Start(ctx context.Context) error {
 }
 
 // Stop 优雅地停止 API 服务
-// 参数：
-//   - ctx: 上下文，用于控制停止超时
-//
-// 返回：
-//   - error: 停止过程中的任何错误（可能是多个错误的合并）
-//
 // 停止流程：
 //  1. 停止 HTTP API 服务器
 //  2. 关闭数据库连接
@@ -185,13 +179,6 @@ func (a *API) Stop(ctx context.Context) error {
 }
 
 // startServer 启动 HTTP 服务器
-//
-// 参数：
-//   - serverConfig: 服务器配置（主机和端口）
-//
-// 返回：
-//   - error: 启动失败时返回错误
-//
 // 功能：
 //   - 根据配置的主机和端口启动 HTTP 服务器
 //   - 记录服务器监听地址
@@ -208,10 +195,6 @@ func (a *API) startServer(serverConfig config.ServerConfig) error {
 }
 
 // Stopped 检查 API 服务是否已停止
-//
-// 返回：
-//   - bool: true 表示服务已停止，false 表示服务仍在运行
-//
 // 用途：
 //   - 用于健康检查
 //   - 用于优雅关闭流程中的状态判断

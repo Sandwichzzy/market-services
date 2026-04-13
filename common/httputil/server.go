@@ -36,11 +36,9 @@ type HTTPOption func(svr *HTTPServer) error
 // - addr: 监听地址（如 ":8080"）
 // - handler: HTTP 处理器
 // - opts: 可选配置项
-//
 // 返回：
 // - HTTPServer 实例
 // - error
-//
 // 特性：
 // 1. 内部创建 listener
 // 2. 支持 context 控制生命周期
