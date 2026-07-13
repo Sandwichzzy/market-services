@@ -1,6 +1,8 @@
 package cryptoexchange
 
 import (
+	"fmt"
+
 	"github.com/ccxt/ccxt/go/v4"
 	"github.com/ethereum/go-ethereum/log"
 )
@@ -11,7 +13,7 @@ type ExchangeClient struct {
 	BinanceClient *ccxt.Binance
 }
 
-func NewExchangeClient(proxy string, proxyType string) (*ExchangeClient, error) {
+func buildExchangeConfig(proxy string, proxyType string) (map[string]interface{}, error) {
 	cfg := map[string]interface{}{
 		"enableRateLimit": true,
 		"timeout":         60000,
@@ -19,24 +21,42 @@ func NewExchangeClient(proxy string, proxyType string) (*ExchangeClient, error) 
 			"defaultType": "spot",
 		},
 	}
+
+	if proxy == "" {
+		return cfg, nil
+	}
+
 	switch proxyType {
-	case "http":
+	case "", "http":
 		cfg["httpProxy"] = proxy
 	case "socks5":
 		cfg["socksProxy"] = proxy
+	default:
+		return nil, fmt.Errorf("unsupported crawler proxy type %q", proxyType)
+	}
+
+	return cfg, nil
+}
+
+func NewExchangeClient(proxy string, proxyType string) (*ExchangeClient, error) {
+	cfg, err := buildExchangeConfig(proxy, proxyType)
+	if err != nil {
+		return nil, err
 	}
 
 	var bybitCli *ccxt.Bybit
 	var okxCli *ccxt.Okx
 	var binanceCli *ccxt.Binance
 	successCount := 0
+	var lastErr error
 
 	// Try to initialize Bybit
 	bybitCli = ccxt.NewBybit(cfg)
-	_, err := bybitCli.LoadMarkets()
+	_, err = bybitCli.LoadMarkets()
 	if err != nil {
 		log.Warn("bybit load markets error, skipping", "proxyType", proxyType, "proxy", proxy, "error", err)
 		bybitCli = nil
+		lastErr = err
 	} else {
 		log.Info("bybit create success", "proxyType", proxyType, "proxy", proxy)
 		successCount++
@@ -48,6 +68,7 @@ func NewExchangeClient(proxy string, proxyType string) (*ExchangeClient, error) 
 	if err != nil {
 		log.Warn("okx load markets error, skipping", "proxyType", proxyType, "proxy", proxy, "error", err)
 		okxCli = nil
+		lastErr = err
 	} else {
 		log.Info("oxk create success", "proxyType", proxyType, "proxy", proxy)
 		successCount++
@@ -59,13 +80,14 @@ func NewExchangeClient(proxy string, proxyType string) (*ExchangeClient, error) 
 	if err != nil {
 		log.Warn("binance load markets error, skipping", "proxyType", proxyType, "proxy", proxy, "error", err)
 		binanceCli = nil
+		lastErr = err
 	} else {
 		log.Info("binance create success", "proxyType", proxyType, "proxy", proxy)
 		successCount++
 	}
 
 	if successCount == 0 {
-		return nil, err
+		return nil, fmt.Errorf("initialize exchange clients: %w", lastErr)
 	}
 
 	log.Info("Exchange client initialized", "successCount", successCount, "total", 3)

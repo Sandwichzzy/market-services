@@ -22,10 +22,10 @@ type ExchangeOrderbook struct {
 	tasks          tasks.Group
 }
 
-func NewExchangeOrderbook(db *database.DB, redisCli *redis.Client, shutDown context.CancelCauseFunc) (*ExchangeOrderbook, error) {
-	exchangeClient, err := NewExchangeClient("http://127.0.0.1:7890", "http")
+func NewExchangeOrderbook(db *database.DB, redisCli *redis.Client, proxy string, proxyType string, shutDown context.CancelCauseFunc) (*ExchangeOrderbook, error) {
+	exchangeClient, err := NewExchangeClient(proxy, proxyType)
 	if err != nil {
-		log.Error("Failed to create exchange client")
+		log.Error("Failed to create exchange client", "proxyType", proxyType, "proxy", proxy, "err", err)
 		return nil, err
 	}
 	resourceCtx, resourceCancel := context.WithCancel(context.Background())
@@ -58,7 +58,7 @@ func (bc *ExchangeOrderbook) Start() error {
 				log.Debug("Fetching order book start")
 				err := bc.syncOrderBookData()
 				if err != nil {
-					log.Error("syncOrderBookData error:", err)
+					log.Error("syncOrderBookData error", "err", err)
 					return err
 				}
 			case <-bc.resourceCtx.Done():
@@ -73,7 +73,7 @@ func (bc *ExchangeOrderbook) Start() error {
 func (bc *ExchangeOrderbook) syncOrderBookData() error {
 	exchangeList, err := bc.db.Exchange.QueryExchanges()
 	if err != nil {
-		log.Error("QueryExchanges error:", err)
+		log.Error("QueryExchanges error", "err", err)
 		return err
 	}
 	for _, exchange := range exchangeList {

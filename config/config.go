@@ -24,12 +24,18 @@ type Config struct {
 	RpcServer             ServerConfig
 	RestServer            ServerConfig
 	RedisConfig           RedisConfig
+	Crawler               CrawlerConfig
 	Metrics               ServerConfig
 	MasterDB              DBConfig
 	SlaveDB               DBConfig
 	ExchangeRatePlatforms []ExchangeRatePlatformConfig
 	BaseCurrency          string
 	APIKeyConfig          APIKeyConfig
+}
+
+type CrawlerConfig struct {
+	Proxy     string
+	ProxyType string
 }
 
 // 存储各平台的API认证密钥：每个字段对应一个平台的API密钥
@@ -138,6 +144,10 @@ func NewConfig(ctx *cli.Context) (Config, error) {
 			Addr:     ctx.String(flags.RedisAddressFlag.Name),
 			Password: ctx.String(flags.RedisPasswordFlag.Name),
 			DB:       ctx.Int(flags.RedisDbIndexFlag.Name),
+		},
+		Crawler: CrawlerConfig{
+			Proxy:     ctx.String(flags.CrawlerProxyFlag.Name),
+			ProxyType: ctx.String(flags.CrawlerProxyTypeFlag.Name),
 		},
 		ExchangeRatePlatforms: defaultExchangeRatePlatforms(),
 		BaseCurrency:          defaultBaseCurrency,

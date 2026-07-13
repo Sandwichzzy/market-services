@@ -21,20 +21,20 @@ type Crawler struct {
 }
 
 func NewCrawler(db *database.DB, redisCli *redis.Client, config *config.Config, shutdown context.CancelCauseFunc) (*Crawler, error) {
-	exchangeOrderbook, err := cryptoexchange.NewExchangeOrderbook(db, redisCli, shutdown)
+	exchangeOrderbook, err := cryptoexchange.NewExchangeOrderbook(db, redisCli, config.Crawler.Proxy, config.Crawler.ProxyType, shutdown)
 	if err != nil {
-		log.Error("Crawler NewBinanceCrawler error", err)
+		log.Error("Crawler NewExchangeOrderbook error", "err", err)
 		return nil, err
 	}
-	exchangeKline, err := cryptoexchange.NewExchangeKlineCrawler(db, shutdown)
+	exchangeKline, err := cryptoexchange.NewExchangeKlineCrawler(db, config.Crawler.Proxy, config.Crawler.ProxyType, shutdown)
 	if err != nil {
-		log.Error("Crawler ExchangeKlineCrawler error", err)
+		log.Error("Crawler ExchangeKlineCrawler error", "err", err)
 		return nil, err
 	}
 
 	fiatcurrencyCrawler, err := fiatcurrency.NewFiatCurrencyCrawler(db, config, shutdown)
 	if err != nil {
-		log.Error("Crawler FiatCurrencyCrawler error", err)
+		log.Error("Crawler FiatCurrencyCrawler error", "err", err)
 		return nil, err
 	}
 
@@ -48,17 +48,17 @@ func NewCrawler(db *database.DB, redisCli *redis.Client, config *config.Config, 
 func (cl *Crawler) Start(ctx context.Context) error {
 	err := cl.ExchangeOrderbook.Start()
 	if err != nil {
-		log.Error("Crawler ExchangeOrderbook Start error", err)
+		log.Error("Crawler ExchangeOrderbook Start error", "err", err)
 		return err
 	}
 	err = cl.ExchangeKline.Start()
 	if err != nil {
-		log.Error("Crawler ExchangeKline Start error", err)
+		log.Error("Crawler ExchangeKline Start error", "err", err)
 		return err
 	}
 	err = cl.FiatCurrencyCrawler.Start()
 	if err != nil {
-		log.Error("Crawler FiatCurrencyCrawler error", err)
+		log.Error("Crawler FiatCurrencyCrawler error", "err", err)
 		return err
 	}
 	return nil
@@ -66,15 +66,15 @@ func (cl *Crawler) Start(ctx context.Context) error {
 
 func (cl *Crawler) Stop(ctx context.Context) error {
 	if err := cl.ExchangeOrderbook.Close(); err != nil {
-		log.Error("Crawler ExchangeOrderbook Stop error", err)
+		log.Error("Crawler ExchangeOrderbook Stop error", "err", err)
 		return err
 	}
 	if err := cl.ExchangeKline.Close(); err != nil {
-		log.Error("Crawler ExchangeKline Stop error", err)
+		log.Error("Crawler ExchangeKline Stop error", "err", err)
 		return err
 	}
 	if err := cl.FiatCurrencyCrawler.Close(); err != nil {
-		log.Error("Crawler FiatCurrencyCrawler error", err)
+		log.Error("Crawler FiatCurrencyCrawler error", "err", err)
 		return err
 	}
 	return nil

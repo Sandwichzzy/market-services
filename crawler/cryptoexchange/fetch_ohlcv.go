@@ -39,10 +39,10 @@ type ExchangeKlineCrawler struct {
 
 // NewExchangeKlineCrawler 创建交易所 K 线抓取器。
 // 抓取器复用统一的 ExchangeClient，并在内部维护独立的生命周期上下文。
-func NewExchangeKlineCrawler(db *database.DB, shutDown context.CancelCauseFunc) (*ExchangeKlineCrawler, error) {
-	exchangeClient, err := NewExchangeClient("http://127.0.0.1:7890", "http")
+func NewExchangeKlineCrawler(db *database.DB, proxy string, proxyType string, shutDown context.CancelCauseFunc) (*ExchangeKlineCrawler, error) {
+	exchangeClient, err := NewExchangeClient(proxy, proxyType)
 	if err != nil {
-		log.Error("Failed to create exchange client for kline crawler")
+		log.Error("Failed to create exchange client for kline crawler", "proxyType", proxyType, "proxy", proxy, "err", err)
 		return nil, err
 	}
 	resourceCtx, resourceCancel := context.WithCancel(context.Background())

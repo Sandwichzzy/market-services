@@ -137,6 +137,18 @@ var (
 		EnvVars:  prefixEnvVars("REDIS_DB_INDEX"),
 		Required: true,
 	}
+
+	CrawlerProxyFlag = &cli.StringFlag{
+		Name:    "crawler-proxy",
+		Usage:   "Optional proxy address for exchange crawler requests, e.g. http://127.0.0.1:7890",
+		EnvVars: prefixEnvVars("CRAWLER_PROXY"),
+	}
+	CrawlerProxyTypeFlag = &cli.StringFlag{
+		Name:    "crawler-proxy-type",
+		Usage:   "Optional proxy type for exchange crawler requests: http or socks5",
+		Value:   "http",
+		EnvVars: prefixEnvVars("CRAWLER_PROXY_TYPE"),
+	}
 )
 
 var requireFlags = []cli.Flag{
@@ -163,6 +175,8 @@ var optionalFlags = []cli.Flag{
 	SlaveDbNameFlag,
 	MetricsHostFlag,
 	MetricsPortFlag,
+	CrawlerProxyFlag,
+	CrawlerProxyTypeFlag,
 }
 
 func init() {
