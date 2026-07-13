@@ -31,14 +31,22 @@ type Config struct {
 	ExchangeRatePlatforms []ExchangeRatePlatformConfig
 	BaseCurrency          string
 	APIKeyConfig          APIKeyConfig
+	Chain                 Chain
+}
+
+type Chain struct {
+	ChainRpcUrl       string
+	RouteAddress      string
+	QuoteTokenAddress string
+	TokenPair         string
 }
 
 type CrawlerConfig struct {
-	Proxy     string
-	ProxyType string
+	Proxy     string // Proxy 是爬虫访问交易所 API 时使用的代理地址。
+	ProxyType string // ProxyType 目前支持 http 和 socks5。
 }
 
-// 存储各平台的API认证密钥：每个字段对应一个平台的API密钥
+// APIKeyConfig 保存各法币汇率平台的 API Key：每个字段对应一个平台的API密钥,空值通常表示该平台未启用。
 // 用于API请求认证：在 fiatcurrency.go:25-33 中，将密钥映射到平台名称传递给 ExchangeRateWorker
 // 安全管理：通过环境变量注入，避免硬编码敏感信息
 type APIKeyConfig struct {
@@ -68,7 +76,7 @@ type RedisConfig struct {
 	DB       int    `yaml:"db"`       // Redis数据库索引
 }
 
-// (平台配置) 决定启用哪些汇率平台：配置项是一个数组，包含你想使用的所有平台
+// ExchangeRatePlatformConfig (平台配置) 决定启用哪些汇率平台：配置项是一个数组，包含你想使用的所有平台
 // 指定平台的访问地址：每个平台可以自定义BaseURL（用于自建服务或代理）
 // 构建请求策略：在 fiatcurrency_client.go:329 的 BuildStrategyConfigs()
 type ExchangeRatePlatformConfig struct {
@@ -148,6 +156,12 @@ func NewConfig(ctx *cli.Context) (Config, error) {
 		Crawler: CrawlerConfig{
 			Proxy:     ctx.String(flags.CrawlerProxyFlag.Name),
 			ProxyType: ctx.String(flags.CrawlerProxyTypeFlag.Name),
+		},
+		Chain: Chain{
+			ChainRpcUrl:       ctx.String(flags.ChainRpcUrlFlag.Name),
+			RouteAddress:      ctx.String(flags.RouteAddressFlag.Name),
+			QuoteTokenAddress: ctx.String(flags.QuoteTokenAddressFlag.Name),
+			TokenPair:         ctx.String(flags.TokenPairFlag.Name),
 		},
 		ExchangeRatePlatforms: defaultExchangeRatePlatforms(),
 		BaseCurrency:          defaultBaseCurrency,

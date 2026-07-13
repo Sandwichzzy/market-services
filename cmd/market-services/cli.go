@@ -6,6 +6,7 @@ import (
 	"github.com/Sandwichzzy/market-services/common/opio"
 	"github.com/Sandwichzzy/market-services/config"
 	"github.com/Sandwichzzy/market-services/crawler"
+	"github.com/Sandwichzzy/market-services/crawler/dex"
 	"github.com/Sandwichzzy/market-services/database"
 	"github.com/Sandwichzzy/market-services/redis"
 	"github.com/Sandwichzzy/market-services/services/grpc"
@@ -133,6 +134,16 @@ func runWorker(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifec
 	return worker.NewWorker(db, redisClient, &cfg, shutdown)
 }
 
+func runDex(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
+	log.Info("run dex...")
+	cfg, err := config.NewConfig(ctx)
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return nil, err
+	}
+	return dex.NewDexMarketPrice(&cfg, shutdown)
+}
+
 // NewCli 构建并返回应用的 CLI 入口。
 // GitCommit 和 GitData 预留用于版本信息展示（当前未使用）。
 // 注册以下子命令：
@@ -168,6 +179,12 @@ func NewCli(GitCommit string, GitData string) *cli.App {
 				Flags:       flags,
 				Description: "Run crawler services",
 				Action:      cliapp.LifecycleCmd(runCrawler),
+			},
+			{
+				Name:        "dex",
+				Flags:       flags,
+				Description: "Run dex services",
+				Action:      cliapp.LifecycleCmd(runDex),
 			},
 			{
 				Name:        "worker",

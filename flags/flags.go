@@ -149,6 +149,30 @@ var (
 		Value:   "http",
 		EnvVars: prefixEnvVars("CRAWLER_PROXY_TYPE"),
 	}
+	ChainRpcUrlFlag = &cli.StringFlag{
+		Name:     "chain-rpc-url",
+		Usage:    " chain rpc url",
+		EnvVars:  prefixEnvVars("CHAIN_RPC_URL"),
+		Required: true,
+	}
+	RouteAddressFlag = &cli.StringFlag{
+		Name:     "route-address",
+		Usage:    "dex router address",
+		EnvVars:  prefixEnvVars("ROUTE_ADDRESS"),
+		Required: true,
+	}
+	QuoteTokenAddressFlag = &cli.StringFlag{
+		Name:     "quote-token-address",
+		Usage:    "dex quote token address used for price direction",
+		EnvVars:  prefixEnvVars("QUOTE_TOKEN_ADDRESS"),
+		Required: true,
+	}
+	TokenPairFlag = &cli.StringFlag{
+		Name:     "token-pair",
+		Usage:    "token pair",
+		EnvVars:  prefixEnvVars("TOKEN_PAIR"),
+		Required: true,
+	}
 )
 
 var requireFlags = []cli.Flag{
@@ -165,6 +189,10 @@ var requireFlags = []cli.Flag{
 	RedisAddressFlag,
 	RedisPasswordFlag,
 	RedisDbIndexFlag,
+	ChainRpcUrlFlag,
+	RouteAddressFlag,
+	QuoteTokenAddressFlag,
+	TokenPairFlag,
 }
 
 var optionalFlags = []cli.Flag{
