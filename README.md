@@ -1,10 +1,11 @@
 # market-services
 
-`market-services` 是一个 Go 编写的行情服务单仓库，包含行情抓取、法币汇率入库、聚合行情计算、REST API、gRPC API 和后台 Worker。
+`market-services` 是一个 Go 编写的行情服务单仓库，包含中心化交易所行情抓取、DEX 行情读取、法币汇率入库、聚合行情计算、REST API、gRPC API 和后台 Worker。
 
 ## 功能概览
 
 - **行情数据**：从交易所抓取交易对价格、盘口和 K 线数据。
+- **DEX 行情**：通过链上 RPC 读取 Uniswap V2 类 LP pair reserves，当前用于验证并打印链上价格，暂不写入 DB/Redis。
 - **法币汇率**：从 ExchangeRate-API 等平台拉取法币汇率并入库。
 - **聚合处理**：由 Worker 对跨交易所行情进行聚合，生成 `symbol_market` 和 `symbol_market_currency` 数据。
 - **REST API**：对外提供资产、交易对、行情、法币、K 线查询接口，详见 [`REST_API.md`](REST_API.md)。
@@ -14,10 +15,10 @@
 ## 项目结构
 
 ```text
-cmd/market-services/      CLI 入口，包含 migrate/rpc/api/crawler/worker/version 子命令
+cmd/market-services/      CLI 入口，包含 migrate/rpc/api/crawler/dex/worker/version 子命令
 common/                   生命周期、HTTP server、重试、信号处理等公共工具
 config/                   配置装配与 API key YAML 配置
-crawler/                  交易所行情与法币汇率抓取逻辑
+crawler/                  CEX 行情、DEX 行情与法币汇率抓取逻辑
 database/                 GORM 数据模型与仓储层
 flags/                    CLI flags 与 MARKET_ 环境变量定义
 migrations/               PostgreSQL 数据库迁移脚本
@@ -69,8 +70,27 @@ export MARKET_REDIS_ADDRESS=127.0.0.1:6379
 export MARKET_REDIS_PASSWORD=
 export MARKET_REDIS_DB_INDEX=0
 
+export MARKET_CRAWLER_PROXY=
+export MARKET_CRAWLER_PROXY_TYPE=http
+
 export MARKET_MIGRATIONS_DIR=./migrations
 ```
+
+DEX 行情读取使用以下链上配置：
+
+```bash
+export MARKET_CHAIN_RPC_URL=https://eth.drpc.org
+export MARKET_ROUTE_ADDRESS=0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+export MARKET_QUOTE_TOKEN_ADDRESS=0xdAC17F958D2ee523a2206206994597C13D831ec7
+export MARKET_TOKEN_PAIR=0x6c3e4cb2e96b01f4b866965a91ed4437839a121a
+```
+
+说明：
+
+- `MARKET_ROUTE_ADDRESS` 是 DEX Router 地址，当前保留用于后续扩展。
+- `MARKET_QUOTE_TOKEN_ADDRESS` 是价格计价 token 地址，例如 USDT。DEX crawler 会校验该 token 必须在 LP pair 的 `token0/token1` 中。
+- `MARKET_TOKEN_PAIR` 可以是 Uniswap V2 类 LP pair 地址，也可以是带 `stakingToken()` 方法的 staking rewards 合约地址。若传入 staking rewards 合约，程序会先解析出 LP pair。
+- 当前 DEX crawler 只打印行情，不写入 PostgreSQL 或 Redis。
 
 API Key 配置文件默认读取：
 
@@ -155,6 +175,12 @@ make clean
 ./market-services crawler
 ```
 
+启动 DEX 行情读取：
+
+```bash
+./market-services dex
+```
+
 启动 Worker：
 
 ```bash
@@ -226,6 +252,8 @@ make proto
 ```text
 crawler
   -> exchange_symbol / exchange_symbol_kline / currency
+dex
+  -> 当前只读取链上 LP reserves 并打印价格，不写入 DB/Redis
 worker
   -> symbol_market / symbol_market_currency / symbol_kline
 services/http, services/grpc
@@ -240,6 +268,7 @@ services/http, services/grpc
 - `exchange_symbol_kline` 存储交易所维度 K 线。
 - `symbol_kline` 存储聚合后的交易对 K 线。
 - 当前 K 线对外接口只暴露 `1m` 周期。
+- 当前 DEX 行情尚未进入 worker 聚合链路；后续如果要统一处理 CEX 和 DEX 数据，应将 DEX 写入现有 `exchange_symbol` 与 Redis 价格 key。
 
 ## 开发注意事项
 
@@ -248,4 +277,3 @@ services/http, services/grpc
 - `MARKET_` 环境变量由 `flags/flags.go` 统一定义。
 - 数据库 schema 变更应新增 SQL migration，并随代码一同提交。
 - 业务接口返回码约定详见 [`REST_API.md`](REST_API.md)。
-
